@@ -10,5 +10,19 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
 
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: task_service
+      DB_USER: task_service
+      DB_PASSWORD: task_service
+    depends_on:
+      - db
+
 volumes:
   db-data:
