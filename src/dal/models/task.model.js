@@ -36,6 +36,7 @@ const Task = sequelize.define('Task', {
         type: DataTypes.STRING,
         allowNull: false,
         defaultValue: 'medium',
+        validate: {isIn: [['low', 'medium', 'high', 'urgent']]},
       },
       assignee_id: {
         type: DataTypes.STRING,
