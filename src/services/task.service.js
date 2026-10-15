@@ -22,4 +22,16 @@ const listTasks = async (clientId, filters) => {
     return taskDal.findTasks(where);
   };
 
-module.exports = {createTask, listTasks};
+  const getTask = async (clientId, taskId) => {
+    const task = await taskDal.findOneTask({id: taskId, client_id: clientId});
+
+    if (!task) {
+      const error = new Error('Task not found');
+      error.status = 404;
+      throw error;
+    }
+
+    return task;
+  };
+
+module.exports = {createTask, listTasks, getTask};

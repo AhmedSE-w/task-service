@@ -14,4 +14,13 @@ const listTasks = async (req, res) => {
   res.json(tasks);
 };
 
-module.exports = {createTask, listTasks};
+const getTask = async (req, res) => {
+  try {
+    const task = await taskService.getTask(req.clientId, req.params.id);
+    res.json(task);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
+module.exports = {createTask, listTasks, getTask};

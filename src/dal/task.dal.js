@@ -8,4 +8,8 @@ const findTasks = async (where) => {
   return Task.findAll({where});
 };
 
-module.exports = {createTask, findTasks};
+const findOneTask = async (where) => {
+  return Task.findOne({where});
+};
+
+module.exports = {createTask, findTasks, findOneTask};
