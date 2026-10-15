@@ -1,4 +1,5 @@
 const taskDal = require('../dal/task.dal');
+const ALLOWED_FILTERS = ['status', 'assignee_id', 'project_id', 'item_type', 'item_id'];
 
 const createTask = async (clientId, data) => {
   if (data.target_kind === 'item' && (!data.item_type || !data.item_id)) {
@@ -9,4 +10,16 @@ const createTask = async (clientId, data) => {
 };
 
 
-module.exports = {createTask};
+const listTasks = async (clientId, filters) => {
+    const where = {client_id: clientId};
+
+    for (const key of ALLOWED_FILTERS) {
+      if (filters[key]) {
+        where[key] = filters[key];
+      }
+    }
+
+    return taskDal.findTasks(where);
+  };
+
+module.exports = {createTask, listTasks};

@@ -9,4 +9,9 @@ const createTask = async (req, res) => {
   } 
 };
 
-module.exports = {createTask};
+const listTasks = async (req, res) => {
+  const tasks = await taskService.listTasks(req.clientId, req.query);
+  res.json(tasks);
+};
+
+module.exports = {createTask, listTasks};
