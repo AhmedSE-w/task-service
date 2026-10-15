@@ -12,4 +12,8 @@ const findOneTask = async (where) => {
   return Task.findOne({where});
 };
 
-module.exports = {createTask, findTasks, findOneTask};
+const updateTask = async (task, changes) => {
+  return task.update(changes);
+};
+
+module.exports = {createTask, findTasks, findOneTask, updateTask};

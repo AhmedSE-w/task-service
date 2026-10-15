@@ -1,5 +1,6 @@
 const taskDal = require('../dal/task.dal');
 const ALLOWED_FILTERS = ['status', 'assignee_id', 'project_id', 'item_type', 'item_id'];
+const EDITABLE_FIELDS = ['title', 'priority', 'due_date'];
 
 const createTask = async (clientId, data) => {
   if (data.target_kind === 'item' && (!data.item_type || !data.item_id)) {
@@ -34,4 +35,17 @@ const listTasks = async (clientId, filters) => {
     return task;
   };
 
-module.exports = {createTask, listTasks, getTask};
+  const updateTask = async (clientId, taskId, changes) => {
+    const task = await getTask(clientId, taskId);
+
+    const allowed = {};
+    for (const key of EDITABLE_FIELDS) {
+      if (changes[key] !== undefined) {
+        allowed[key] = changes[key];
+      }
+    }
+
+    return taskDal.updateTask(task, allowed);
+  };
+
+module.exports = {createTask, listTasks, getTask, updateTask};
