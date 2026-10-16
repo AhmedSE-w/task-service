@@ -1,7 +1,7 @@
 const Task = require('./models/task.model');
 
-const createTask = async (data) => {
-  return Task.create(data);
+const createTask = async (data, transaction) => {
+  return Task.create(data, {transaction});
 };
 
 const findTasks = async (where) => {

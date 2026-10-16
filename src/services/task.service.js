@@ -1,13 +1,25 @@
 const taskDal = require('../dal/task.dal');
+const taskEventDal = require('../dal/task-event.dal');
+const sequelize = require('../config/database');
 const ALLOWED_FILTERS = ['status', 'assignee_id', 'project_id', 'item_type', 'item_id'];
 const EDITABLE_FIELDS = ['title', 'priority', 'due_date'];
 
-const createTask = async (clientId, data) => {
+const createTask = async (clientId, userId, data) => {
   if (data.target_kind === 'item' && (!data.item_type || !data.item_id)) {
     throw new Error('item_type and item_id are required for an item task');
   }
 
-  return taskDal.createTask({...data, client_id: clientId});
+  return sequelize.transaction(async (transaction) => {
+    const task = await taskDal.createTask({...data, client_id: clientId}, transaction);
+
+    await taskEventDal.createTaskEvent({
+      task_id: task.id,
+      actor_id: userId,
+      type: 'created',
+    }, transaction);
+
+    return task;
+  });
 };
 
 
