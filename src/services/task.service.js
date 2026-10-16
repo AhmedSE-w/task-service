@@ -74,4 +74,9 @@ const listTasks = async (clientId, filters) => {
     });
   };
 
-module.exports = {createTask, listTasks, getTask, updateTask};
+  const listTaskEvents = async (clientId, taskId) => {
+    await getTask(clientId, taskId);
+    return taskEventDal.findTaskEvents(taskId);
+  };
+
+module.exports = {createTask, listTasks, getTask, updateTask, listTaskEvents};

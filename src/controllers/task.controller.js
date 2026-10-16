@@ -32,4 +32,13 @@ const updateTask = async (req, res) => {
   }
 };
 
-module.exports = {createTask, listTasks, getTask, updateTask};
+const listTaskEvents = async (req, res) => {
+  try {
+    const events = await taskService.listTaskEvents(req.clientId, req.params.id);
+    res.json(events);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
+module.exports = {createTask, listTasks, getTask, updateTask, listTaskEvents};
