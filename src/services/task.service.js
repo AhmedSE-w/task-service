@@ -47,7 +47,7 @@ const listTasks = async (clientId, filters) => {
     return task;
   };
 
-  const updateTask = async (clientId, taskId, changes) => {
+  const updateTask = async (clientId, userId, taskId, changes) => {
     const task = await getTask(clientId, taskId);
 
     const allowed = {};
@@ -57,7 +57,21 @@ const listTasks = async (clientId, filters) => {
       }
     }
 
-    return taskDal.updateTask(task, allowed);
+    return sequelize.transaction(async (transaction) => {
+      for (const key of Object.keys(allowed)) {
+        if (task[key] !== allowed[key]) {
+          await taskEventDal.createTaskEvent({
+            task_id: task.id,
+            actor_id: userId,
+            type: `${key}_changed`,
+            from_value: task[key],
+            to_value: allowed[key],
+          }, transaction);
+        }
+      }
+
+      return taskDal.updateTask(task, allowed, transaction);
+    });
   };
 
 module.exports = {createTask, listTasks, getTask, updateTask};
