@@ -51,7 +51,6 @@ describe('GET /v1/tasks/:id', () => {
 
     
   });
-});
 
 it('returns a task by id', async () => {
       const created = await request(app)
@@ -65,4 +64,39 @@ it('returns a task by id', async () => {
 
       expect(res.status).toBe(200);
       expect(res.body.title).toBe('Find me');
+    });
+});
+describe('PATCH /v1/tasks/:id', () => {
+  it('update the priority', async () => {
+    const created = await request(app)
+    .post('/v1/tasks')
+    .set(headers)
+    .send({task_type: 'verify_poi', title: 'Edit me', target_kind: 'item', item_type: 'poi', item_id: '3'});
+    
+    const res = await request(app)
+    .patch(`/v1/tasks/${created.body.id}`)
+    .set(headers)
+    .send({priority: 'high'});
+    expect(res.status).toBe(200);
+    expect(res.body.priority).toBe('high');
+      });
+    });
+
+    it('record the events of a task', async () => {
+      const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({task_type: 'verify_poi', title: 'History', target_kind: 'item', item_type: 'poi', item_id: '4'});
+
+      await request(app)
+      .patch(`/v1/tasks/${created.body.id}`)
+      .set(headers)
+      .send({priority: 'high'});
+
+      const res = await request(app)
+      .get(`/v1/tasks/${created.body.id}/events`)
+      .set(headers);
+
+      expect(res.status).toBe(200)
+      expect(res.body.map((event) => event.type)).toEqual(['created', 'priority_changed']);
     });
