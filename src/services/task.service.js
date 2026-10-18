@@ -3,6 +3,7 @@ const taskEventDal = require('../dal/task-event.dal');
 const sequelize = require('../config/database');
 const ALLOWED_FILTERS = ['status', 'assignee_id', 'project_id', 'item_type', 'item_id'];
 const EDITABLE_FIELDS = ['title', 'priority', 'due_date'];
+const taskCommentDal = require('../dal/task-comment.dal');
 
 const createTask = async (clientId, userId, data) => {
   if (data.target_kind === 'item' && (!data.item_type || !data.item_id)) {
@@ -79,4 +80,29 @@ const listTasks = async (clientId, filters) => {
     return taskEventDal.findTaskEvents(taskId);
   };
 
-module.exports = {createTask, listTasks, getTask, updateTask, listTaskEvents};
+  const addComment = async (clientId, userId, taskId, data) => {
+    const task = await getTask(clientId, taskId);
+
+    return sequelize.transaction(async (transaction) => {
+      const comment = await taskCommentDal.createTaskComment({
+        task_id: task.id,
+        author_id: userId,
+        body: data.body,
+      }, transaction);
+
+      await taskEventDal.createTaskEvent({
+        task_id: task.id,
+        actor_id: userId,
+        type: 'comment_added',
+      }, transaction);
+
+      return comment;
+    });
+  };
+
+  const listComments = async (clientId, taskId) => {
+    await getTask(clientId, taskId);
+    return taskCommentDal.findTaskComments(taskId);
+  };
+
+module.exports = {createTask, listTasks, getTask, updateTask, listTaskEvents, addComment, listComments};
