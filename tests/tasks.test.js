@@ -40,3 +40,29 @@ describe('POST /v1/tasks', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('GET /v1/tasks/:id', () => {
+  it('returns 404 for a task that dose not exist', async () => {
+    const res = await request(app)
+    .get('/v1/tasks/00000000-0000-0000-0000-000000000000')
+    .set(headers);
+
+    expect(res.status).toBe(404);
+
+    
+  });
+});
+
+it('returns a task by id', async () => {
+      const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({task_type: 'verify_poi', title: 'Find me', target_kind: 'item', item_type: 'poi', item_id: '2'});
+
+      const res = await request(app)
+      .get(`/v1/tasks/${created.body.id}`)
+      .set(headers);
+
+      expect(res.status).toBe(200);
+      expect(res.body.title).toBe('Find me');
+    });
