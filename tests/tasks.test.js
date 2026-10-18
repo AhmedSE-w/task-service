@@ -100,3 +100,42 @@ describe('PATCH /v1/tasks/:id', () => {
       expect(res.status).toBe(200)
       expect(res.body.map((event) => event.type)).toEqual(['created', 'priority_changed']);
     });
+
+
+    describe('POST /v1/tasks/:id/comments', () => {
+      it('adds and list comments', async () => {
+        const created = await request(app)
+        .post('/v1/tasks')
+        .set(headers)
+        .send({task_type: 'verify_poi', title: 'Comments', target_kind: 'item', item_type: 'poi', item_id: '5'});
+
+        await request(app)
+        .post(`/v1/tasks/${created.body.id}/comments`)
+        .set(headers)
+        .send({body: 'Check the map'});
+
+        const res = await request(app)
+        .get(`/v1/tasks/${created.body.id}/comments`)
+        .set(headers);
+
+        expect(res.status).toBe(200);
+        expect(res.body.map((comment) => comment.body)).toEqual(['Check the map']);
+      });
+    });
+
+    describe('GET /v1/tasks', () => {
+      it('filters tasks by item_id', async () => {
+        await request(app)
+        .post('/v1/tasks')
+        .set(headers)
+        .send({task_type: 'verify_poi', title: 'Filter me', target_kind: 'item', item_type: 'poi', item_id: '999'});
+
+        const res = await request(app)
+        .get('/v1/tasks?item_id=999')
+        .set(headers);
+
+        expect(res.status).toBe(200);
+        expect(res.body.length).toBe(1);
+        expect(res.body[0].item_id).toBe('999');
+      });
+    });
