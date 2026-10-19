@@ -6,6 +6,51 @@ paths:
   /health:
     get:
       summary: Health check
+      security: []
       responses:
         '200':
           description: The service is running
+
+  /v1/tasks:
+    post:
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '201':
+          description: The task was created
+        '400':
+          description: Invalid input
+        '401':
+          description: Missing or invalid api key
+
+components:
+  schemas:
+    TaskInput:
+      type: object
+      required: [task_type, title, target_kind]
+      properties:
+        task_type: {type: string, example: verify_poi}
+        title: {type: string, example: Verify Nahdi Olaya branch}
+        priority: {type: string, enum: ['low', 'medium', 'high', 'urgent']}
+        target_kind: {type: string, enum: [item, batch]}
+        item_type: {type: string, example: poi}
+        item_id: {type: string, example: '12345'}
+        assignee_id: {type: string, example: hisham}
+        due_date: {type: string, format: date}
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+    UserId:
+      type: apiKey
+      in: header
+      name: x-user-id
+security:
+  - ApiKey: []
+    UserId: []
