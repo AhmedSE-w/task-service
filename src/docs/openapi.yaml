@@ -27,6 +27,83 @@ paths:
           description: Invalid input
         '401':
           description: Missing or invalid api key
+    get:
+      summary: List tasks
+      parameters:
+        - {name: status, in: query, schema: {type: string}}
+        - {name: assignee_id, in: query, schema: {type: string}}
+        - {name: project_id, in: query, schema: {type: string}}
+        - {name: item_type, in: query, schema: {type: string}}
+        - {name: item_id, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: The matching tasks
+
+  /v1/tasks/{id}:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: Get a task
+      responses:
+        '200':
+          description: The task
+        '404':
+          description: Task not found
+    patch:
+      summary: Update title, priority or due date
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: {type: string}
+                priority: {type: string, enum: [low, medium, high, urgent]}
+                due_date: {type: string, format: date}
+      responses:
+        '200':
+          description: The updated task
+        '404':
+          description: Task not found
+
+  /v1/tasks/{id}/events:
+    parameters:
+      - {name: id, path, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: Task history
+      responses:
+        '200':
+          description: The events of the task, oldest first
+        '404':
+         description: Task not found
+
+  /v1/tasks/{id}/comments:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: List comments
+      responses:
+        '200':
+          description: The comments of the task, oldest first
+        '404':
+          description: Task not found
+    post:
+      summary: Add a comment
+      requestBody:
+       required: true
+       content:
+         application/json:
+          schema:
+            type: object
+            required: [body]
+            properties:
+              body: {type: string, example: 'The location is wrong, check the map'}
+      responses:
+        '201':
+          description: The comment was created
+        '404':
+          description: Task not found
 
 components:
   schemas:
