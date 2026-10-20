@@ -6,14 +6,14 @@ services:
       POSTGRES_PASSWORD: task_service
       POSTGRES_DB: task_service
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - db-data:/var/lib/postgresql/data
 
   app:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       PORT: 3000
       DB_HOST: db

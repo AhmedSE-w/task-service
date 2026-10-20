@@ -6,7 +6,7 @@ const createTask = async (req, res) => {
     res.status(201).json(task);
   } catch (error) {
     res.status(400).json({error: error.message});
-  } 
+  }
 };
 
 const listTasks = async (req, res) => {
@@ -59,4 +59,12 @@ const listComments = async (req, res) => {
   }
 };
 
-module.exports = {createTask, listTasks, getTask, updateTask, listTaskEvents, addComment, listComments};
+module.exports = {
+  createTask,
+  listTasks,
+  getTask,
+  updateTask,
+  listTaskEvents,
+  addComment,
+  listComments,
+};
