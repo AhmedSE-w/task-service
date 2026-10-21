@@ -69,7 +69,7 @@ paths:
 
   /v1/tasks/{id}/events:
     parameters:
-      - {name: id, path, required: true, schema: {type: string, format: uuid}}
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
     get:
       summary: Task history
       responses:
