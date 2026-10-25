@@ -18,7 +18,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiDocument));
 app.use(OpenApiValidator.middleware({apiSpec: openapiDocument, validateRequests: true}));
 app.use(healthRoutes);
 app.use(taskRoutes);
-app.use((error, req, res, next) => {
+app.use((error, req, res, _next) => {
   res.status(error.status || 500).json({error: error.message});
 });
 
