@@ -21,7 +21,7 @@ describe('POST /v1/tasks', () => {
     expect(res.status).toBe(401);
   });
 
-  it('create a task', async () => {
+  it('creates a task', async () => {
     const res = await request(app).post('/v1/tasks').set(headers).send({
       task_type: 'verify_poi',
       title: 'Test task',
@@ -45,7 +45,7 @@ describe('POST /v1/tasks', () => {
 });
 
 describe('GET /v1/tasks/:id', () => {
-  it('returns 404 for a task that dose not exist', async () => {
+  it('returns 404 for a task that does not exist', async () => {
     const res = await request(app)
       .get('/v1/tasks/00000000-0000-0000-0000-000000000000')
       .set(headers);
@@ -75,7 +75,7 @@ describe('GET /v1/tasks/:id', () => {
   });
 });
 describe('PATCH /v1/tasks/:id', () => {
-  it('update the priority', async () => {
+  it('updates the priority', async () => {
     const created = await request(app).post('/v1/tasks').set(headers).send({
       task_type: 'verify_poi',
       title: 'Edit me',
@@ -91,27 +91,27 @@ describe('PATCH /v1/tasks/:id', () => {
     expect(res.status).toBe(200);
     expect(res.body.priority).toBe('high');
   });
-});
 
-it('record the events of a task', async () => {
-  const created = await request(app).post('/v1/tasks').set(headers).send({
-    task_type: 'verify_poi',
-    title: 'History',
-    target_kind: 'item',
-    item_type: 'poi',
-    item_id: '4',
+  it('records the events of a task', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'History',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '4',
+    });
+
+    await request(app).patch(`/v1/tasks/${created.body.id}`).set(headers).send({priority: 'high'});
+
+    const res = await request(app).get(`/v1/tasks/${created.body.id}/events`).set(headers);
+
+    expect(res.status).toBe(200);
+    expect(res.body.map((event) => event.type)).toEqual(['created', 'priority_changed']);
   });
-
-  await request(app).patch(`/v1/tasks/${created.body.id}`).set(headers).send({priority: 'high'});
-
-  const res = await request(app).get(`/v1/tasks/${created.body.id}/events`).set(headers);
-
-  expect(res.status).toBe(200);
-  expect(res.body.map((event) => event.type)).toEqual(['created', 'priority_changed']);
 });
 
 describe('POST /v1/tasks/:id/comments', () => {
-  it('adds and list comments', async () => {
+  it('adds and lists comments', async () => {
     const created = await request(app).post('/v1/tasks').set(headers).send({
       task_type: 'verify_poi',
       title: 'Comments',
