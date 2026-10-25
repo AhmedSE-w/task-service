@@ -4,17 +4,13 @@ A generic project and task service for HudHud apps. Backend only, REST API under
 
 ## Run locally
 
-Requires Node.js 24, pnpm and Docker.
+Requires Docker.
 
 ```bash
-pnpm install
-cp .env.example .env
 docker compose up -d
-pnpm exec sequelize-cli db:migrate
-pnpm exec sequelize-cli db:seed:all
 ```
 
-The seeder adds a client named `Portal` with the dev API key `portal-dev-key`.
+On start, the service runs the migrations and the seeder. The seeder adds a client named `Portal` with the dev API key `portal-dev-key`.
 
 ## API docs
 
@@ -25,8 +21,9 @@ Open http://localhost:3000/docs, press **Authorize**, and set:
 
 ## Tests
 
-Docker must be running. The tests start their own temporary PostgreSQL.
+Requires Node.js 24, pnpm and Docker. The tests start their own temporary PostgreSQL.
 
 ```bash
+pnpm install
 pnpm test
 ```
