@@ -4,7 +4,7 @@ const sequelize = require('../src/config/database');
 const Client = require('../src/dal/models/client.model');
 const {hashApiKey} = require('../src/middlewares/auth.middleware');
 
-const headers = {'x-api-key': 'test-key', 'x-user-id': 'sara'};
+const headers = {'x-api-key': 'test-key', 'x-user-id': 'ahemd', 'x-user-role': 'manager'};
 
 beforeAll(async () => {
   await Client.create({name: 'Test client', api_key_hash: hashApiKey('test-key')});
@@ -19,6 +19,14 @@ describe('POST /v1/tasks', () => {
     const res = await request(app).post('/v1/tasks').send({title: 'No key'});
 
     expect(res.status).toBe(401);
+  });
+
+  it('returns 400 for an unknown role', async () => {
+    const res = await request(app)
+      .get('/v1/tasks')
+      .set({...headers, 'x-user-role': 'apple'});
+
+    expect(res.status).toBe(400);
   });
 
   it('creates a task', async () => {
