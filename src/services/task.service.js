@@ -13,96 +13,115 @@ const createTask = async (clientId, userId, data) => {
   return sequelize.transaction(async (transaction) => {
     const task = await taskDal.createTask({...data, client_id: clientId}, transaction);
 
-    await taskEventDal.createTaskEvent({
-      task_id: task.id,
-      actor_id: userId,
-      type: 'created',
-    }, transaction);
+    await taskEventDal.createTaskEvent(
+      {
+        task_id: task.id,
+        actor_id: userId,
+        type: 'created',
+      },
+      transaction,
+    );
 
     return task;
   });
 };
 
-
 const listTasks = async (clientId, filters) => {
-    const where = {client_id: clientId};
+  const where = {client_id: clientId};
 
-    for (const key of ALLOWED_FILTERS) {
-      if (filters[key]) {
-        where[key] = filters[key];
-      }
+  for (const key of ALLOWED_FILTERS) {
+    if (filters[key]) {
+      where[key] = filters[key];
     }
+  }
 
-    return taskDal.findTasks(where);
-  };
+  return taskDal.findTasks(where);
+};
 
-  const getTask = async (clientId, taskId) => {
-    const task = await taskDal.findOneTask({id: taskId, client_id: clientId});
+const getTask = async (clientId, taskId) => {
+  const task = await taskDal.findOneTask({id: taskId, client_id: clientId});
 
-    if (!task) {
-      const error = new Error('Task not found');
-      error.status = 404;
-      throw error;
+  if (!task) {
+    const error = new Error('Task not found');
+    error.status = 404;
+    throw error;
+  }
+
+  return task;
+};
+
+const updateTask = async (clientId, userId, taskId, changes) => {
+  const task = await getTask(clientId, taskId);
+
+  const allowed = {};
+  for (const key of EDITABLE_FIELDS) {
+    if (changes[key] !== undefined) {
+      allowed[key] = changes[key];
     }
+  }
 
-    return task;
-  };
-
-  const updateTask = async (clientId, userId, taskId, changes) => {
-    const task = await getTask(clientId, taskId);
-
-    const allowed = {};
-    for (const key of EDITABLE_FIELDS) {
-      if (changes[key] !== undefined) {
-        allowed[key] = changes[key];
-      }
-    }
-
-    return sequelize.transaction(async (transaction) => {
-      for (const key of Object.keys(allowed)) {
-        if (task[key] !== allowed[key]) {
-          await taskEventDal.createTaskEvent({
+  return sequelize.transaction(async (transaction) => {
+    for (const key of Object.keys(allowed)) {
+      if (task[key] !== allowed[key]) {
+        await taskEventDal.createTaskEvent(
+          {
             task_id: task.id,
             actor_id: userId,
             type: `${key}_changed`,
             from_value: task[key],
             to_value: allowed[key],
-          }, transaction);
-        }
+          },
+          transaction,
+        );
       }
+    }
 
-      return taskDal.updateTask(task, allowed, transaction);
-    });
-  };
+    return taskDal.updateTask(task, allowed, transaction);
+  });
+};
 
-  const listTaskEvents = async (clientId, taskId) => {
-    await getTask(clientId, taskId);
-    return taskEventDal.findTaskEvents(taskId);
-  };
+const listTaskEvents = async (clientId, taskId) => {
+  await getTask(clientId, taskId);
+  return taskEventDal.findTaskEvents(taskId);
+};
 
-  const addComment = async (clientId, userId, taskId, data) => {
-    const task = await getTask(clientId, taskId);
+const addComment = async (clientId, userId, taskId, data) => {
+  const task = await getTask(clientId, taskId);
 
-    return sequelize.transaction(async (transaction) => {
-      const comment = await taskCommentDal.createTaskComment({
+  return sequelize.transaction(async (transaction) => {
+    const comment = await taskCommentDal.createTaskComment(
+      {
         task_id: task.id,
         author_id: userId,
         body: data.body,
-      }, transaction);
+      },
+      transaction,
+    );
 
-      await taskEventDal.createTaskEvent({
+    await taskEventDal.createTaskEvent(
+      {
         task_id: task.id,
         actor_id: userId,
         type: 'comment_added',
-      }, transaction);
+      },
+      transaction,
+    );
 
-      return comment;
-    });
-  };
+    return comment;
+  });
+};
 
-  const listComments = async (clientId, taskId) => {
-    await getTask(clientId, taskId);
-    return taskCommentDal.findTaskComments(taskId);
-  };
+const listComments = async (clientId, taskId) => {
+  await getTask(clientId, taskId);
+  return taskCommentDal.findTaskComments(taskId);
+};
 
-module.exports = {createTask, listTasks, getTask, updateTask, listTaskEvents, addComment, listComments};
+module.exports = {
+  createTask,
+  listTasks,
+  getTask,
+  updateTask,
+  listTaskEvents,
+  addComment,
+  listComments,
+};

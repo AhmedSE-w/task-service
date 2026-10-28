@@ -1,5 +1,5 @@
 openapi: 3.0.3
-info: 
+info:
   title: Task Service
   version: 1.0.0
 paths:
@@ -76,7 +76,7 @@ paths:
         '200':
           description: The events of the task, oldest first
         '404':
-         description: Task not found
+          description: Task not found
 
   /v1/tasks/{id}/comments:
     parameters:
@@ -91,14 +91,14 @@ paths:
     post:
       summary: Add a comment
       requestBody:
-       required: true
-       content:
-         application/json:
-          schema:
-            type: object
-            required: [body]
-            properties:
-              body: {type: string, example: 'The location is wrong, check the map'}
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: {type: string, example: 'The location is wrong, check the map'}
       responses:
         '201':
           description: The comment was created
