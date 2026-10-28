@@ -21,6 +21,10 @@ const Task = sequelize.define(
       references: {model: 'projects', key: 'id'},
       onDelete: 'SET NULL',
     },
+    workflow_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
     task_type: {
       type: DataTypes.STRING,
       allowNull: false,
