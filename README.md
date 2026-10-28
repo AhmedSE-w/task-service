@@ -17,7 +17,8 @@ On start, the service runs the migrations and the seeder. The seeder adds a clie
 Open http://localhost:3000/docs, press **Authorize**, and set:
 
 - `x-api-key`: `portal-dev-key`
-- `x-user-id`: any user id, for example `sara`
+- `x-user-id`: any user id, for example `ahmed`
+- `x-user-role`: `admin`, `manager` or `worker`
 
 ## Tests
 
