@@ -67,6 +67,12 @@ describe('GET /v1/tasks/:id', () => {
     expect(res.status).toBe(200);
     expect(res.body.title).toBe('Find me');
   });
+
+  it('returns 400 for an id that is not a uuid', async () => {
+    const res = await request(app).get('/v1/tasks/not-a-uuid').set(headers);
+
+    expect(res.status).toBe(400);
+  });
 });
 describe('PATCH /v1/tasks/:id', () => {
   it('update the priority', async () => {
