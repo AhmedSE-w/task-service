@@ -9,6 +9,11 @@ services:
       - '5433:5432'
     volumes:
       - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U task_service -d task_service']
+      interval: 2s
+      timeout: 5s
+      retries: 10
 
   app:
     build: .
@@ -22,7 +27,8 @@ services:
       DB_USER: task_service
       DB_PASSWORD: task_service
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   db-data:
