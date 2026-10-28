@@ -41,4 +41,22 @@ const listTaskEvents = async (req, res) => {
   }
 };
 
-module.exports = {createTask, listTasks, getTask, updateTask, listTaskEvents};
+const addComment = async (req, res) => {
+  try {
+    const comment = await taskService.addComment(req.clientId, req.userId, req.params.id, req.body);
+    res.status(201).json(comment);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
+const listComments = async (req, res) => {
+  try {
+    const comments = await taskService.listComments(req.clientId, req.params.id);
+    res.json(comments);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
+module.exports = {createTask, listTasks, getTask, updateTask, listTaskEvents, addComment, listComments};
