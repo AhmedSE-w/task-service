@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["node", "src/server.js"]
+CMD ["sh", "-c", "pnpm exec sequelize-cli db:migrate && pnpm exec sequelize-cli db:seed:all && node src/server.js"]
