@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info: 
+  title: Task Service
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: The service is running
+
+  /v1/tasks:
+    post:
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '201':
+          description: The task was created
+        '400':
+          description: Invalid input
+        '401':
+          description: Missing or invalid api key
+    get:
+      summary: List tasks
+      parameters:
+        - {name: status, in: query, schema: {type: string}}
+        - {name: assignee_id, in: query, schema: {type: string}}
+        - {name: project_id, in: query, schema: {type: string}}
+        - {name: item_type, in: query, schema: {type: string}}
+        - {name: item_id, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: The matching tasks
+
+  /v1/tasks/{id}:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: Get a task
+      responses:
+        '200':
+          description: The task
+        '404':
+          description: Task not found
+    patch:
+      summary: Update title, priority or due date
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: {type: string}
+                priority: {type: string, enum: [low, medium, high, urgent]}
+                due_date: {type: string, format: date}
+      responses:
+        '200':
+          description: The updated task
+        '404':
+          description: Task not found
+
+  /v1/tasks/{id}/events:
+    parameters:
+      - {name: id, path, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: Task history
+      responses:
+        '200':
+          description: The events of the task, oldest first
+        '404':
+         description: Task not found
+
+  /v1/tasks/{id}/comments:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: List comments
+      responses:
+        '200':
+          description: The comments of the task, oldest first
+        '404':
+          description: Task not found
+    post:
+      summary: Add a comment
+      requestBody:
+       required: true
+       content:
+         application/json:
+          schema:
+            type: object
+            required: [body]
+            properties:
+              body: {type: string, example: 'The location is wrong, check the map'}
+      responses:
+        '201':
+          description: The comment was created
+        '404':
+          description: Task not found
+
+components:
+  schemas:
+    TaskInput:
+      type: object
+      required: [task_type, title, target_kind]
+      properties:
+        task_type: {type: string, example: verify_poi}
+        title: {type: string, example: Verify Nahdi Olaya branch}
+        priority: {type: string, enum: ['low', 'medium', 'high', 'urgent']}
+        target_kind: {type: string, enum: [item, batch]}
+        item_type: {type: string, example: poi}
+        item_id: {type: string, example: '12345'}
+        assignee_id: {type: string, example: hisham}
+        due_date: {type: string, format: date}
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+    UserId:
+      type: apiKey
+      in: header
+      name: x-user-id
+security:
+  - ApiKey: []
+    UserId: []
