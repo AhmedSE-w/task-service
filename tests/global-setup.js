@@ -10,7 +10,7 @@ module.exports = async () => {
   process.env.DB_USER = container.getUsername();
   process.env.DB_PASSWORD = container.getPassword();
 
-  execSync('npx sequelize-cli db:migrate', {stdio:'inherit'});
+  execSync('pnpm exec sequelize-cli db:migrate', {stdio:'inherit'});
 
   globalThis.dbContainer = container;
 };
