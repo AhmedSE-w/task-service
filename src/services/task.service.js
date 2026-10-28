@@ -17,6 +17,7 @@ const createTask = async (clientId, userId, data) => {
       {
         task_id: task.id,
         actor_id: userId,
+        client_id: clientId,
         type: 'task.created',
       },
       transaction,
@@ -67,6 +68,7 @@ const updateTask = async (clientId, userId, taskId, changes) => {
           {
             task_id: task.id,
             actor_id: userId,
+            client_id: clientId,
             type: `task.${key}_changed`,
             from_value: task[key],
             to_value: allowed[key],
@@ -93,6 +95,7 @@ const addComment = async (clientId, userId, taskId, data) => {
       {
         task_id: task.id,
         author_id: userId,
+        client_id: clientId,
         body: data.body,
       },
       transaction,
@@ -102,6 +105,7 @@ const addComment = async (clientId, userId, taskId, data) => {
       {
         task_id: task.id,
         actor_id: userId,
+        client_id: clientId,
         type: 'task.comment_added',
       },
       transaction,

@@ -13,6 +13,10 @@ const TaskEvent = sequelize.define(
       type: DataTypes.UUID,
       allowNull: false,
     },
+    client_id: {
+      type: DataTypes.UUID,
+      allowNull: false,
+    },
     actor_id: {
       type: DataTypes.STRING,
       allowNull: false,
