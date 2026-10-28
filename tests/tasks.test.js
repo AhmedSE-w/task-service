@@ -106,7 +106,7 @@ describe('PATCH /v1/tasks/:id', () => {
     const res = await request(app).get(`/v1/tasks/${created.body.id}/events`).set(headers);
 
     expect(res.status).toBe(200);
-    expect(res.body.map((event) => event.type)).toEqual(['created', 'priority_changed']);
+    expect(res.body.map((event) => event.type)).toEqual(['task.created', 'task.priority_changed']);
   });
 });
 
