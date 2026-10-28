@@ -40,6 +40,7 @@ describe('POST /v1/tasks', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.title).toBe('Test task');
+    expect(res.body.workflow_id).toBeDefined();
   });
 
   it('returns 400 when item_id is missing', async () => {

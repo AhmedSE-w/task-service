@@ -4,6 +4,8 @@ const sequelize = require('../config/database');
 const ALLOWED_FILTERS = ['status', 'assignee_id', 'project_id', 'item_type', 'item_id'];
 const EDITABLE_FIELDS = ['title', 'priority', 'due_date'];
 const taskCommentDal = require('../dal/task-comment.dal');
+const workflowDal = require('../dal/workflow.dal');
+const DEFAULT_WORKFLOW = require('./default-workflow');
 
 const createTask = async (clientId, userId, data) => {
   if (data.target_kind === 'item' && (!data.item_type || !data.item_id)) {
@@ -11,7 +13,18 @@ const createTask = async (clientId, userId, data) => {
   }
 
   return sequelize.transaction(async (transaction) => {
-    const task = await taskDal.createTask({...data, client_id: clientId}, transaction);
+    let workflow = await workflowDal.findDefaultWorkflow(clientId, transaction);
+
+    if (!workflow) {
+      workflow = await workflowDal.createWorkflow(
+        {...DEFAULT_WORKFLOW, client_id: clientId, is_default: true},
+        transaction,
+      );
+    }
+    const task = await taskDal.createTask(
+      {...data, client_id: clientId, workflow_id: workflow.id},
+      transaction,
+    );
 
     await taskEventDal.createTaskEvent(
       {

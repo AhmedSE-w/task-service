@@ -1,19 +1,6 @@
 'use strict';
 
-const OPEN = ['to_do', 'in_progress', 'in_review'];
-
-const DEFAULT_WORKFLOW = {
-  name: 'Default',
-  statuses: ['to_do', 'in_progress', 'in_review', 'done', 'blocked', 'cancelled'],
-  transitions: [
-    {from: 'to_do', to: 'in_progress', by: ['assignee']},
-    {from: 'in_progress', to: 'in_review', by: ['assignee']},
-    {from: 'in_review', to: 'done', by: ['reviewer']},
-    {from: 'in_review', to: 'in_progress', by: ['reviewer'], required: ['reason']},
-    ...OPEN.map((from) => ({from, to: 'blocked', by: ['manager']})),
-    ...OPEN.map((from) => ({from, to: 'cancelled', by: ['manager']})),
-  ],
-};
+const DEFAULT_WORKFLOW = require('../../services/default-workflow');
 
 module.exports = {
   async up(queryInterface) {
