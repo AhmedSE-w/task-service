@@ -105,6 +105,38 @@ paths:
         '404':
           description: Task not found
 
+  /v1/workflows:
+    post:
+      summary: Create a workflow (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, statuses, transitions]
+              properties:
+                name: {type: string, example: Review only}
+                statuses:
+                  type: array
+                  items: {type: string}
+                  example: [in_review, done]
+                transitions:
+                  type: array
+                  items:
+                    type: object
+                    required: [from, to, by]
+                    properties:
+                      from: {type: string, example: in_review}
+                      to: {type: string, example: done}
+                      by: {type: array, items: {type: string}, example: [reviewer]}
+      responses:
+        '201':
+          description: The workflow was created
+        '400':
+          description: Invalid input
+        '403':
+          description: Only an admin can create a workflow
 components:
   schemas:
     TaskInput:
