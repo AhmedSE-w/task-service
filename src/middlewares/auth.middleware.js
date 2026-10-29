@@ -31,4 +31,11 @@ const authenticate = async (req, res, next) => {
   next();
 };
 
-module.exports = {authenticate, hashApiKey};
+const requireAdmin = (req, res, next) => {
+  if (req.userRole !== 'admin') {
+    return res.status(403).json({error: 'Only an admin can do this'});
+  }
+  next();
+};
+
+module.exports = {authenticate, hashApiKey, requireAdmin};
