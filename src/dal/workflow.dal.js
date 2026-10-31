@@ -8,4 +8,8 @@ const createWorkflow = async (data, transaction) => {
   return Workflow.create(data, {transaction});
 };
 
-module.exports = {findDefaultWorkflow, createWorkflow};
+const findWorkflowById = async (id) => {
+  return Workflow.findByPk(id);
+};
+
+module.exports = {findDefaultWorkflow, createWorkflow, findWorkflowById};
