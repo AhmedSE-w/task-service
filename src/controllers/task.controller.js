@@ -59,6 +59,21 @@ const listComments = async (req, res) => {
   }
 };
 
+const transitionTask = async (req, res) => {
+  try {
+    const task = await taskService.transitionTask(
+      req.clientId,
+      req.userId,
+      req.userRole,
+      req.params.id,
+      req.body.to,
+    );
+    res.json(task);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
 module.exports = {
   createTask,
   listTasks,
@@ -67,4 +82,5 @@ module.exports = {
   listTaskEvents,
   addComment,
   listComments,
+  transitionTask,
 };

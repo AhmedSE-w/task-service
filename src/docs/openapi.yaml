@@ -105,6 +105,29 @@ paths:
         '404':
           description: Task not found
 
+  /v1/tasks/{id}/transition:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      summary: Move a task to anther status
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to]
+              properties:
+                to: {type: string, example: in_progress}
+      responses:
+        '200':
+          description: The task in its new status
+        '400':
+          description: The move is not allowed by the workflow
+        '403':
+          description: The user may not make this move
+        '404':
+          description: Task not found
   /v1/workflows:
     post:
       summary: Create a workflow (admin only)

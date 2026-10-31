@@ -133,6 +133,44 @@ const listComments = async (clientId, taskId) => {
   return taskCommentDal.findTaskComments(taskId);
 };
 
+const transitionTask = async (clientId, userId, userRole, taskId, to) => {
+  const task = await getTask(clientId, taskId);
+  const workflow = await workflowDal.findWorkflowById(task.workflow_id);
+  const move = workflow.transitions.find((t) => t.from === task.status && t.to === to);
+  if (!move) {
+    const error = new Error(`Cannot move from ${task.status} to ${to}`);
+    error.status = 400;
+    throw error;
+  }
+
+  const allowed = move.by.some(
+    (who) =>
+      who === userRole ||
+      (who === 'assignee' && userId === task.assignee_id) ||
+      (who === 'reviewer' && userId === task.reviewer_id),
+  );
+  if (!allowed) {
+    const error = new Error('You may not make this move');
+    error.status = 403;
+    throw error;
+  }
+
+  return sequelize.transaction(async (transaction) => {
+    await taskEventDal.createTaskEvent(
+      {
+        task_id: task.id,
+        actor_id: userId,
+        client_id: clientId,
+        type: 'task.status_changed',
+        from_value: task.status,
+        to_value: to,
+      },
+      transaction,
+    );
+    return taskDal.updateTask(task, {status: to}, transaction);
+  });
+};
+
 module.exports = {
   createTask,
   listTasks,
@@ -141,4 +179,5 @@ module.exports = {
   listTaskEvents,
   addComment,
   listComments,
+  transitionTask,
 };

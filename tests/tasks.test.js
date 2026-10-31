@@ -4,7 +4,7 @@ const sequelize = require('../src/config/database');
 const Client = require('../src/dal/models/client.model');
 const {hashApiKey} = require('../src/middlewares/auth.middleware');
 
-const headers = {'x-api-key': 'test-key', 'x-user-id': 'ahemd', 'x-user-role': 'manager'};
+const headers = {'x-api-key': 'test-key', 'x-user-id': 'ahmed', 'x-user-role': 'manager'};
 
 beforeAll(async () => {
   await Client.create({name: 'Test client', api_key_hash: hashApiKey('test-key')});
@@ -156,5 +156,62 @@ describe('GET /v1/tasks', () => {
     expect(res.status).toBe(200);
     expect(res.body.length).toBe(1);
     expect(res.body[0].item_id).toBe('999');
+  });
+});
+
+describe('POST /v1/tasks/:id/transition', () => {
+  it('lets the task assignee start a task', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Move me',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '10',
+      assignee_id: 'ahmed',
+    });
+
+    const res = await request(app)
+      .post(`/v1/tasks/${created.body.id}/transition`)
+      .set(headers)
+      .send({to: 'in_progress'});
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('in_progress');
+  });
+
+  it('refuses a move the workflow does not allow', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Skip ahead',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '11',
+      assignee_id: 'ahmed',
+    });
+
+    const res = await request(app)
+      .post(`/v1/tasks/${created.body.id}/transition`)
+      .set(headers)
+      .send({to: 'done'});
+
+    expect(res.status).toBe(400);
+  });
+
+  it('refuses a user who is not the assignee', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Not mine',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '12',
+      assignee_id: 'hisham',
+    });
+
+    const res = await request(app)
+      .post(`/v1/tasks/${created.body.id}/transition`)
+      .set(headers)
+      .send({to: 'in_progress'});
+
+    expect(res.status).toBe(403);
   });
 });

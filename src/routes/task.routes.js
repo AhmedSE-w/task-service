@@ -7,6 +7,7 @@ const {
   listTaskEvents,
   addComment,
   listComments,
+  transitionTask,
 } = require('../controllers/task.controller');
 const {authenticate} = require('../middlewares/auth.middleware');
 
@@ -19,5 +20,6 @@ router.patch('/v1/tasks/:id', authenticate, updateTask);
 router.get('/v1/tasks/:id/events', authenticate, listTaskEvents);
 router.post('/v1/tasks/:id/comments', authenticate, addComment);
 router.get('/v1/tasks/:id/comments', authenticate, listComments);
+router.post('/v1/tasks/:id/transition', authenticate, transitionTask);
 
 module.exports = router;
