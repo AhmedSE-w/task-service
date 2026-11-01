@@ -171,6 +171,25 @@ const transitionTask = async (clientId, userId, userRole, taskId, to) => {
   });
 };
 
+const assignTask = async (clientId, userId, taskId, assigneeId) => {
+  const task = await getTask(clientId, taskId);
+
+  return sequelize.transaction(async (transaction) => {
+    await taskEventDal.createTaskEvent(
+      {
+        task_id: task.id,
+        actor_id: userId,
+        client_id: clientId,
+        type: 'task.assigned',
+        from_value: task.assignee_id,
+        to_value: assigneeId,
+      },
+      transaction,
+    );
+    return taskDal.updateTask(task, {assignee_id: assigneeId}, transaction);
+  });
+};
+
 module.exports = {
   createTask,
   listTasks,
@@ -180,4 +199,5 @@ module.exports = {
   addComment,
   listComments,
   transitionTask,
+  assignTask,
 };

@@ -38,4 +38,11 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-module.exports = {authenticate, hashApiKey, requireAdmin};
+const requireManager = (req, res, next) => {
+  if (!['manager', 'admin'].includes(req.userRole)) {
+    return res.status(403).json({error: 'Only a manager can do this'});
+  }
+  next();
+};
+
+module.exports = {authenticate, hashApiKey, requireAdmin, requireManager};

@@ -128,6 +128,29 @@ paths:
           description: The user may not make this move
         '404':
           description: Task not found
+
+  /v1/tasks/{id}/assign:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      summary: Assign a task to a user (manager only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [assignee_id]
+              properties:
+                assignee_id: {type: string, example: hisham}
+      responses:
+        '200':
+          description: The task with its new assignee
+        '403':
+          description: Only a manager can assign tasks
+        '404':
+          description: Task not found
+
   /v1/workflows:
     post:
       summary: Create a workflow (admin only)

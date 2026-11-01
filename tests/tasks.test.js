@@ -215,3 +215,39 @@ describe('POST /v1/tasks/:id/transition', () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe('POST /v1/tasks/:id/assign', () => {
+  it('lets a manager assign a task', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Assign me',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '20',
+    });
+    const res = await request(app)
+      .post(`/v1/tasks/${created.body.id}/assign`)
+      .set(headers)
+      .send({assignee_id: 'hisham'});
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignee_id).toBe('hisham');
+  });
+
+  it('refuses a worker to assign', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Not my call',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '21',
+    });
+
+    const res = await request(app)
+      .post(`/v1/tasks/${created.body.id}/assign`)
+      .set({...headers, 'x-user-role': 'worker'})
+      .send({assignee_id: 'hisham'});
+
+    expect(res.status).toBe(403);
+  });
+});

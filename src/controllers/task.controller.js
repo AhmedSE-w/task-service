@@ -74,6 +74,20 @@ const transitionTask = async (req, res) => {
   }
 };
 
+const assignTask = async (req, res) => {
+  try {
+    const task = await taskService.assignTask(
+      req.clientId,
+      req.userId,
+      req.params.id,
+      req.body.assignee_id,
+    );
+    res.json(task);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
 module.exports = {
   createTask,
   listTasks,
@@ -83,4 +97,5 @@ module.exports = {
   addComment,
   listComments,
   transitionTask,
+  assignTask,
 };

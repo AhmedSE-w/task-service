@@ -8,8 +8,9 @@ const {
   addComment,
   listComments,
   transitionTask,
+  assignTask,
 } = require('../controllers/task.controller');
-const {authenticate} = require('../middlewares/auth.middleware');
+const {authenticate, requireManager} = require('../middlewares/auth.middleware');
 
 const router = express.Router();
 
@@ -21,5 +22,6 @@ router.get('/v1/tasks/:id/events', authenticate, listTaskEvents);
 router.post('/v1/tasks/:id/comments', authenticate, addComment);
 router.get('/v1/tasks/:id/comments', authenticate, listComments);
 router.post('/v1/tasks/:id/transition', authenticate, transitionTask);
+router.post('/v1/tasks/:id/assign', authenticate, requireManager, assignTask);
 
 module.exports = router;
