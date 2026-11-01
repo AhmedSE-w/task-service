@@ -154,6 +154,11 @@ const transitionTask = async (clientId, userId, userRole, taskId, to) => {
     error.status = 403;
     throw error;
   }
+  if (move.by.includes('reviewer') && userId === task.assignee_id) {
+    const error = new Error('You cannot review your own task');
+    error.status = 403;
+    throw error;
+  }
 
   return sequelize.transaction(async (transaction) => {
     await taskEventDal.createTaskEvent(

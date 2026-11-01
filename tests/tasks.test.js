@@ -214,6 +214,26 @@ describe('POST /v1/tasks/:id/transition', () => {
 
     expect(res.status).toBe(403);
   });
+
+  it('refuses the assignee approving their own task', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Self review',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '30',
+      assignee_id: 'ahmed',
+      reviewer_id: 'ahmed',
+    });
+
+    const url = `/v1/tasks/${created.body.id}/transition`;
+
+    await request(app).post(url).set(headers).send({to: 'in_progress'});
+    await request(app).post(url).set(headers).send({to: 'in_review'});
+    const res = await request(app).post(url).set(headers).send({to: 'done'});
+
+    expect(res.status).toBe(403);
+  });
 });
 
 describe('POST /v1/tasks/:id/assign', () => {
