@@ -151,6 +151,32 @@ paths:
         '404':
           description: Task not found
 
+  /v1/projects:
+    post:
+      summary: Create a project (manager only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: {type: string, example: Riyadh pharmacies verification}
+                description: {type: string}
+                owner_id: {type: string, example: sara}
+                start_date: {type: string, format: date}
+                due_date: {type: string, format: date}
+      responses:
+        '201':
+          description: The project was created
+        '403':
+          description: Only a manager can create a project
+    get:
+      summary: List projects
+      responses:
+        '200':
+          description: The projects of this client
   /v1/workflows:
     post:
       summary: Create a workflow (admin only)

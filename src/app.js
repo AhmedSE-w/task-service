@@ -7,6 +7,7 @@ const OpenApiValidator = require('express-openapi-validator');
 const healthRoutes = require('./routes/health.routes');
 const taskRoutes = require('./routes/task.routes');
 const workflowRoutes = require('./routes/workflow.routes');
+const projectRoutes = require('./routes/project.routes');
 
 const openapiDocument = YAML.parse(
   fs.readFileSync(path.join(__dirname, 'docs/openapi.yaml'), 'utf8'),
@@ -20,6 +21,7 @@ app.use(OpenApiValidator.middleware({apiSpec: openapiDocument, validateRequests:
 app.use(healthRoutes);
 app.use(taskRoutes);
 app.use(workflowRoutes);
+app.use(projectRoutes);
 app.use((error, req, res, _next) => {
   res.status(error.status || 500).json({error: error.message});
 });
