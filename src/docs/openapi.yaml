@@ -196,6 +196,7 @@ components:
         item_type: {type: string, example: poi}
         item_id: {type: string, example: '12345'}
         assignee_id: {type: string, example: hisham}
+        reviewer_id: {type: string, example: faisal}
         due_date: {type: string, format: date}
   securitySchemes:
     ApiKey:
