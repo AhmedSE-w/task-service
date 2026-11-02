@@ -14,4 +14,22 @@ const listProjects = async (req, res) => {
   res.json(projects);
 };
 
-module.exports = {createProject, listProjects};
+const getProject = async (req, res) => {
+  try {
+    const project = await projectService.getProjectDetails(req.clientId, req.params.id);
+    res.json(project);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
+const updateProject = async (req, res) => {
+  try {
+    const project = await projectService.updateProject(req.clientId, req.params.id, req.body);
+    res.json(project);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
+module.exports = {createProject, listProjects, getProject, updateProject};

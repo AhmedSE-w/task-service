@@ -177,6 +177,41 @@ paths:
       responses:
         '200':
           description: The projects of this client
+
+  /v1/projects/{id}:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+    get:
+      summary: Read a project with progress counts
+      responses:
+        '200':
+          description: The project, with the number of its tasks in each status
+        '404':
+          description: Project not found
+    patch:
+      summary: Update or close a project (manager only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: {type: string}
+                description: {type: string}
+                owner_id: {type: string}
+                start_date: {type: string, format: date}
+                due_date: {type: string, format: date}
+                status: {type: string, enum: [open, closed]}
+
+      responses:
+        '200':
+          description: The updated project
+        '403':
+          description: Only a manager can update a project
+        '404':
+          description: Project not found
+
   /v1/workflows:
     post:
       summary: Create a workflow (admin only)
@@ -223,6 +258,7 @@ components:
         item_id: {type: string, example: '12345'}
         assignee_id: {type: string, example: hisham}
         reviewer_id: {type: string, example: faisal}
+        project_id: {type: string, format: uuid}
         due_date: {type: string, format: date}
   securitySchemes:
     ApiKey:
