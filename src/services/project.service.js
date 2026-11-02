@@ -1,5 +1,8 @@
 const projectDal = require('../dal/project.dal');
 const taskDal = require('../dal/task.dal');
+const taskEventDal = require('../dal/task-event.dal');
+const sequelize = require('../config/database');
+const {splitCounts} = require('./split');
 
 const createProject = async (clientId, userId, data) => {
   return projectDal.createProject({owner_id: userId, ...data, client_id: clientId});
@@ -46,4 +49,55 @@ const updateProject = async (clientId, projectId, changes) => {
   return projectDal.updateProject(project, allowed);
 };
 
-module.exports = {createProject, listProjects, getProject, getProjectDetails, updateProject};
+const assignProjectTasks = async (clientId, userId, projectId, splits) => {
+  const project = await getProject(clientId, projectId);
+
+  let totalPercent = 0;
+  for (const split of splits) {
+    totalPercent = totalPercent + split.percent;
+  }
+  if (totalPercent !== 100) {
+    const error = new Error('Percentages must add up to 100');
+    error.status = 400;
+    throw error;
+  }
+  const tasks = await taskDal.findTasks({
+    client_id: clientId,
+    project_id: project.id,
+    assignee_id: null,
+  });
+  const counts = splitCounts(tasks.length, splits);
+  const owners = [];
+  for (let i = 0; i < splits.length; i++) {
+    for (let n = 0; n < counts[i]; n++) {
+      owners.push(splits[i].user_id);
+    }
+  }
+  return sequelize.transaction(async (transaction) => {
+    for (let i = 0; i < tasks.length; i++) {
+      await taskEventDal.createTaskEvent(
+        {
+          task_id: tasks[i].id,
+          actor_id: userId,
+          client_id: clientId,
+          type: 'task.assigned',
+          from_value: null,
+          to_value: owners[i],
+        },
+        transaction,
+      );
+      await taskDal.updateTask(tasks[i], {assignee_id: owners[i]}, transaction);
+    }
+
+    return splits.map((split, i) => ({user_id: split.user_id, count: counts[i]}));
+  });
+};
+
+module.exports = {
+  createProject,
+  listProjects,
+  getProject,
+  getProjectDetails,
+  updateProject,
+  assignProjectTasks,
+};
