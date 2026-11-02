@@ -32,4 +32,18 @@ const updateProject = async (req, res) => {
   }
 };
 
-module.exports = {createProject, listProjects, getProject, updateProject};
+const assignProjectTasks = async (req, res) => {
+  try {
+    const result = await projectService.assignProjectTasks(
+      req.clientId,
+      req.userId,
+      req.params.id,
+      req.body.splits,
+    );
+    res.json(result);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
+module.exports = {createProject, listProjects, getProject, updateProject, assignProjectTasks};

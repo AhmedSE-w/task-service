@@ -85,3 +85,53 @@ describe('PATCH /v1/projects/:id', () => {
     expect(res.body.status).toBe('closed');
   });
 });
+
+describe('POST /v1/projects/:id/assign', () => {
+  it('split unassigned tasks by percentage', async () => {
+    const project = await request(app).post('/v1/projects').set(headers).send({name: 'Split me'});
+    const task = {
+      task_type: 'verify_poi',
+      title: 'To split',
+      target_kind: 'item',
+      item_type: 'poi',
+      project_id: project.body.id,
+    };
+
+    for (let i = 0; i < 7; i++) {
+      await request(app)
+        .post('/v1/tasks')
+        .set(headers)
+        .send({...task, item_id: String(i)});
+    }
+
+    const res = await request(app)
+      .post(`/v1/projects/${project.body.id}/assign`)
+      .set(headers)
+      .send({
+        splits: [
+          {user_id: 'hisham', percent: 50},
+          {user_id: 'faisal', percent: 30},
+          {user_id: 'ahmed', percent: 20},
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.map((split) => split.count)).toEqual([4, 2, 1]);
+  });
+
+  it('refuses if percentages that do not add up to 100', async () => {
+    const project = await request(app).post('/v1/projects').set(headers).send({name: 'Bad split'});
+
+    const res = await request(app)
+      .post(`/v1/projects/${project.body.id}/assign`)
+      .set(headers)
+      .send({
+        splits: [
+          {user_id: 'hisham', percent: 50},
+          {user_id: 'faisal', percent: 40},
+        ],
+      });
+
+    expect(res.status).toBe(400);
+  });
+});
