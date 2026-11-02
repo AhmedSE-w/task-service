@@ -8,4 +8,12 @@ const findProjects = async (where) => {
   return Project.findAll({where});
 };
 
-module.exports = {createProject, findProjects};
+const findOneProject = async (where) => {
+  return Project.findOne({where});
+};
+
+const updateProject = async (project, changes, transaction) => {
+  return project.update(changes, {transaction});
+};
+
+module.exports = {createProject, findProjects, findOneProject, updateProject};

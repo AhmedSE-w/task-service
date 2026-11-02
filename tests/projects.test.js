@@ -43,3 +43,45 @@ describe('GET /v1/projects', () => {
     expect(res.body.map((project) => project.name)).toContain('Riyadh pharmacies');
   });
 });
+
+describe('GET /v1/projects/:id', () => {
+  it('returns the project with progress counts', async () => {
+    const project = await request(app).post('/v1/projects').set(headers).send({
+      name: 'Counted',
+    });
+    const task = {
+      task_type: 'verify_poi',
+      title: 'In project',
+      target_kind: 'item',
+      item_type: 'poi',
+      project_id: project.body.id,
+    };
+    await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({...task, item_id: '1'});
+    await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({...task, item_id: '2'});
+
+    const res = await request(app).get(`/v1/projects/${project.body.id}`).set(headers);
+
+    expect(res.status).toBe(200);
+    expect(res.body.progress).toEqual({to_do: 2});
+  });
+});
+
+describe('PATCH /v1/projects/:id', () => {
+  it('lets a manager close a project', async () => {
+    const project = await request(app).post('/v1/projects').set(headers).send({name: 'Close me'});
+
+    const res = await request(app)
+      .patch(`/v1/projects/${project.body.id}`)
+      .set(headers)
+      .send({status: 'closed'});
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('closed');
+  });
+});
