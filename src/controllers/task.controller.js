@@ -16,7 +16,12 @@ const listTasks = async (req, res) => {
 
 const getTask = async (req, res) => {
   try {
-    const task = await taskService.getTask(req.clientId, req.params.id);
+    const task = await taskService.getVisibleTask(
+      req.clientId,
+      req.userId,
+      req.userRole,
+      req.params.id,
+    );
     res.json(task);
   } catch (error) {
     res.status(error.status || 400).json({error: error.message});
@@ -34,7 +39,12 @@ const updateTask = async (req, res) => {
 
 const listTaskEvents = async (req, res) => {
   try {
-    const events = await taskService.listTaskEvents(req.clientId, req.params.id);
+    const events = await taskService.listTaskEvents(
+      req.clientId,
+      req.userId,
+      req.userRole,
+      req.params.id,
+    );
     res.json(events);
   } catch (error) {
     res.status(error.status || 400).json({error: error.message});
@@ -43,7 +53,13 @@ const listTaskEvents = async (req, res) => {
 
 const addComment = async (req, res) => {
   try {
-    const comment = await taskService.addComment(req.clientId, req.userId, req.params.id, req.body);
+    const comment = await taskService.addComment(
+      req.clientId,
+      req.userId,
+      req.userRole,
+      req.params.id,
+      req.body,
+    );
     res.status(201).json(comment);
   } catch (error) {
     res.status(error.status || 400).json({error: error.message});
@@ -52,7 +68,12 @@ const addComment = async (req, res) => {
 
 const listComments = async (req, res) => {
   try {
-    const comments = await taskService.listComments(req.clientId, req.params.id);
+    const comments = await taskService.listComments(
+      req.clientId,
+      req.userId,
+      req.userRole,
+      req.params.id,
+    );
     res.json(comments);
   } catch (error) {
     res.status(error.status || 400).json({error: error.message});

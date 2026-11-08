@@ -68,6 +68,16 @@ const getTask = async (clientId, taskId) => {
   return task;
 };
 
+const getVisibleTask = async (clientId, userId, userRole, taskId) => {
+  const task = await getTask(clientId, taskId);
+  if (userRole === 'worker' && task.assignee_id !== userId) {
+    const error = new Error('Task not found');
+    error.status = 404;
+    throw error;
+  }
+  return task;
+};
+
 const updateTask = async (clientId, userId, taskId, changes) => {
   const task = await getTask(clientId, taskId);
 
@@ -99,13 +109,13 @@ const updateTask = async (clientId, userId, taskId, changes) => {
   });
 };
 
-const listTaskEvents = async (clientId, taskId) => {
-  await getTask(clientId, taskId);
+const listTaskEvents = async (clientId, userId, userRole, taskId) => {
+  await getVisibleTask(clientId, userId, userRole, taskId);
   return taskEventDal.findTaskEvents(taskId);
 };
 
-const addComment = async (clientId, userId, taskId, data) => {
-  const task = await getTask(clientId, taskId);
+const addComment = async (clientId, userId, userRole, taskId, data) => {
+  const task = await getVisibleTask(clientId, userId, userRole, taskId);
 
   return sequelize.transaction(async (transaction) => {
     const comment = await taskCommentDal.createTaskComment(
@@ -132,8 +142,8 @@ const addComment = async (clientId, userId, taskId, data) => {
   });
 };
 
-const listComments = async (clientId, taskId) => {
-  await getTask(clientId, taskId);
+const listComments = async (clientId, userId, userRole, taskId) => {
+  await getVisibleTask(clientId, userId, userRole, taskId);
   return taskCommentDal.findTaskComments(taskId);
 };
 
@@ -209,4 +219,5 @@ module.exports = {
   listComments,
   transitionTask,
   assignTask,
+  getVisibleTask,
 };

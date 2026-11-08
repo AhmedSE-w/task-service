@@ -97,6 +97,22 @@ describe('GET /v1/tasks/:id', () => {
 
     expect(res.status).toBe(400);
   });
+  it("hides other people's tasks from a worker", async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Hisham only',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '40',
+      assignee_id: 'hisham',
+    });
+    const worker = {...headers, 'x-user-role': 'worker'};
+    const url = `/v1/tasks/${created.body.id}`;
+
+    expect((await request(app).get(url).set(worker)).status).toBe(404);
+    expect((await request(app).get(`${url}/events`).set(worker)).status).toBe(404);
+    expect((await request(app).get(`${url}/comments`).set(worker)).status).toBe(404);
+  });
 });
 describe('PATCH /v1/tasks/:id', () => {
   it('updates the priority', async () => {
