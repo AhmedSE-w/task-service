@@ -309,6 +309,37 @@ describe('POST /v1/tasks/:id/transition', () => {
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('done');
   });
+
+  it('requires a reason to reject a task', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Reject me',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '60',
+      assignee_id: 'hisham',
+    });
+    const url = `/v1/tasks/${created.body.id}`;
+    const hisham = {...headers, 'x-user-id': 'hisham', 'x-user-role': 'worker'};
+
+    await request(app).post(`${url}/transition`).set(hisham).send({to: 'in_progress'});
+    await request(app).post(`${url}/transition`).set(hisham).send({to: 'in_review'});
+
+    const noReason = await request(app)
+      .post(`${url}/transition`)
+      .set(headers)
+      .send({to: 'in+progress'});
+    expect(noReason.status).toBe(400);
+
+    const withReason = await request(app)
+      .post(`${url}/transition`)
+      .set(headers)
+      .send({to: 'in_progress', reason: 'The location is wrong'});
+    expect(withReason.status).toBe(200);
+
+    const comments = await request(app).get(`${url}/comments`).set(headers);
+    expect(comments.body.map((c) => c.body)).toEqual(['The location is wrong']);
+  });
 });
 
 describe('POST /v1/tasks/:id/assign', () => {

@@ -147,7 +147,7 @@ const listComments = async (clientId, userId, userRole, taskId) => {
   return taskCommentDal.findTaskComments(taskId);
 };
 
-const transitionTask = async (clientId, userId, userRole, taskId, to) => {
+const transitionTask = async (clientId, userId, userRole, taskId, to, fields = {}) => {
   const task = await getTask(clientId, taskId);
   const workflow = await workflowDal.findWorkflowById(task.workflow_id);
   const move = workflow.transitions.find((t) => t.from === task.status && t.to === to);
@@ -174,6 +174,14 @@ const transitionTask = async (clientId, userId, userRole, taskId, to) => {
     throw error;
   }
 
+  for (const field of move.required || []) {
+    if (!fields[field]) {
+      const error = new Error(`${field} is required for this move`);
+      error.status = 400;
+      throw error;
+    }
+  }
+
   return sequelize.transaction(async (transaction) => {
     await taskEventDal.createTaskEvent(
       {
@@ -186,6 +194,14 @@ const transitionTask = async (clientId, userId, userRole, taskId, to) => {
       },
       transaction,
     );
+
+    if (fields.reason) {
+      await taskCommentDal.createTaskComment(
+        {task_id: task.id, author_id: userId, client_id: clientId, body: fields.reason},
+        transaction,
+      );
+    }
+
     return taskDal.updateTask(task, {status: to}, transaction);
   });
 };

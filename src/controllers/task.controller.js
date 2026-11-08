@@ -88,6 +88,7 @@ const transitionTask = async (req, res) => {
       req.userRole,
       req.params.id,
       req.body.to,
+      req.body,
     );
     res.json(task);
   } catch (error) {
