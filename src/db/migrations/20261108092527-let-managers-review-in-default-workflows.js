@@ -1,0 +1,37 @@
+'use strict';
+
+const TRANSITIONS = [
+  {from: 'to_do', to: 'in_progress', by: ['assignee']},
+  {from: 'in_progress', to: 'in_review', by: ['assignee']},
+  {from: 'in_review', to: 'done', by: ['reviewer', 'manager', 'admin']},
+  {from: 'in_review', to: 'in_progress', by: ['reviewer', 'manager', 'admin']},
+  {
+    from: 'in_review',
+    to: 'in_progress',
+    by: ['reviewer', 'manager', 'admin'],
+    required: ['reason'],
+  },
+  ...['to_do', 'in_progress', 'in_review'].map((from) => ({
+    from,
+    to: 'blocked',
+    by: ['manager', 'admin'],
+  })),
+  ...['to_do', 'in_progress', 'in_review'].map((from) => ({
+    from,
+    to: 'cancelled',
+    by: ['manager', 'admin'],
+  })),
+];
+
+module.exports = {
+  async up(queryInterface) {
+    await queryInterface.sequelize.query(
+      'UPDATE workflows SET transitions = :transitions WHERE is_default = true',
+      {
+        replacements: {transitions: JSON.stringify(TRANSITIONS)},
+      },
+    );
+  },
+
+  async down() {},
+};

@@ -288,6 +288,27 @@ describe('POST /v1/tasks/:id/transition', () => {
 
     expect(res.status).toBe(403);
   });
+
+  it('lets a manager approve a task', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Manager approves',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '50',
+      assignee_id: 'hisham',
+      reviewer_id: 'faisal',
+    });
+    const url = `/v1/tasks/${created.body.id}/transition`;
+    const hisham = {...headers, 'x-user-id': 'hisham', 'x-user-role': 'worker'};
+
+    await request(app).post(url).set(hisham).send({to: 'in_progress'});
+    await request(app).post(url).set(hisham).send({to: 'in_review'});
+    const res = await request(app).post(url).set(headers).send({to: 'done'});
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('done');
+  });
 });
 
 describe('POST /v1/tasks/:id/assign', () => {
