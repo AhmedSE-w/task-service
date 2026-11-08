@@ -119,6 +119,7 @@ paths:
               required: [to]
               properties:
                 to: {type: string, example: in_progress}
+                reason: {type: string, example: The location is wrong}
       responses:
         '200':
           description: The task in its new status

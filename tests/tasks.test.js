@@ -21,6 +21,21 @@ describe('POST /v1/tasks', () => {
     expect(res.status).toBe(401);
   });
 
+  it('refuses a worker creating a task', async () => {
+    const res = await request(app)
+      .post('/v1/tasks')
+      .set({...headers, 'x-user-role': 'worker'})
+      .send({
+        task_type: 'verify_poi',
+        title: 'Not allowed',
+        target_kind: 'item',
+        item_type: 'poi',
+        item_id: '1',
+      });
+
+    expect(res.status).toBe(403);
+  });
+
   it('returns 400 for an unknown role', async () => {
     const res = await request(app)
       .get('/v1/tasks')
@@ -81,6 +96,22 @@ describe('GET /v1/tasks/:id', () => {
     const res = await request(app).get('/v1/tasks/not-a-uuid').set(headers);
 
     expect(res.status).toBe(400);
+  });
+  it("hides other people's tasks from a worker", async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Hisham only',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '40',
+      assignee_id: 'hisham',
+    });
+    const worker = {...headers, 'x-user-role': 'worker'};
+    const url = `/v1/tasks/${created.body.id}`;
+
+    expect((await request(app).get(url).set(worker)).status).toBe(404);
+    expect((await request(app).get(`${url}/events`).set(worker)).status).toBe(404);
+    expect((await request(app).get(`${url}/comments`).set(worker)).status).toBe(404);
   });
 });
 describe('PATCH /v1/tasks/:id', () => {
@@ -156,6 +187,29 @@ describe('GET /v1/tasks', () => {
     expect(res.status).toBe(200);
     expect(res.body.length).toBe(1);
     expect(res.body[0].item_id).toBe('999');
+  });
+  it('shows a worker only thier own tasks', async () => {
+    const task = {
+      task_type: 'verify_poi',
+      title: 'Mine or not',
+      target_kind: 'item',
+      item_type: 'worker_test',
+    };
+    await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({...task, item_id: '1', assignee_id: 'ahmed'});
+    await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({...task, item_id: '2', assignee_id: 'hisham'});
+
+    const res = await request(app)
+      .get('/v1/tasks?item_type=worker_test&assignee_id=hisham')
+      .set({...headers, 'x-user-role': 'worker'});
+
+    expect(res.status).toBe(200);
+    expect(res.body.map((t) => t.assignee_id)).toEqual(['ahmed']);
   });
 });
 
@@ -233,6 +287,58 @@ describe('POST /v1/tasks/:id/transition', () => {
     const res = await request(app).post(url).set(headers).send({to: 'done'});
 
     expect(res.status).toBe(403);
+  });
+
+  it('lets a manager approve a task', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Manager approves',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '50',
+      assignee_id: 'hisham',
+      reviewer_id: 'faisal',
+    });
+    const url = `/v1/tasks/${created.body.id}/transition`;
+    const hisham = {...headers, 'x-user-id': 'hisham', 'x-user-role': 'worker'};
+
+    await request(app).post(url).set(hisham).send({to: 'in_progress'});
+    await request(app).post(url).set(hisham).send({to: 'in_review'});
+    const res = await request(app).post(url).set(headers).send({to: 'done'});
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('done');
+  });
+
+  it('requires a reason to reject a task', async () => {
+    const created = await request(app).post('/v1/tasks').set(headers).send({
+      task_type: 'verify_poi',
+      title: 'Reject me',
+      target_kind: 'item',
+      item_type: 'poi',
+      item_id: '60',
+      assignee_id: 'hisham',
+    });
+    const url = `/v1/tasks/${created.body.id}`;
+    const hisham = {...headers, 'x-user-id': 'hisham', 'x-user-role': 'worker'};
+
+    await request(app).post(`${url}/transition`).set(hisham).send({to: 'in_progress'});
+    await request(app).post(`${url}/transition`).set(hisham).send({to: 'in_review'});
+
+    const noReason = await request(app)
+      .post(`${url}/transition`)
+      .set(headers)
+      .send({to: 'in+progress'});
+    expect(noReason.status).toBe(400);
+
+    const withReason = await request(app)
+      .post(`${url}/transition`)
+      .set(headers)
+      .send({to: 'in_progress', reason: 'The location is wrong'});
+    expect(withReason.status).toBe(200);
+
+    const comments = await request(app).get(`${url}/comments`).set(headers);
+    expect(comments.body.map((c) => c.body)).toEqual(['The location is wrong']);
   });
 });
 
