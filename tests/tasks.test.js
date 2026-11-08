@@ -21,6 +21,21 @@ describe('POST /v1/tasks', () => {
     expect(res.status).toBe(401);
   });
 
+  it('refuses a worker creating a task', async () => {
+    const res = await request(app)
+      .post('/v1/tasks')
+      .set({...headers, 'x-user-role': 'worker'})
+      .send({
+        task_type: 'verify_poi',
+        title: 'Not allowed',
+        target_kind: 'item',
+        item_type: 'poi',
+        item_id: '1',
+      });
+
+    expect(res.status).toBe(403);
+  });
+
   it('returns 400 for an unknown role', async () => {
     const res = await request(app)
       .get('/v1/tasks')
