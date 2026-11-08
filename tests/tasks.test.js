@@ -172,6 +172,29 @@ describe('GET /v1/tasks', () => {
     expect(res.body.length).toBe(1);
     expect(res.body[0].item_id).toBe('999');
   });
+  it('shows a worker only thier own tasks', async () => {
+    const task = {
+      task_type: 'verify_poi',
+      title: 'Mine or not',
+      target_kind: 'item',
+      item_type: 'worker_test',
+    };
+    await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({...task, item_id: '1', assignee_id: 'ahmed'});
+    await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({...task, item_id: '2', assignee_id: 'hisham'});
+
+    const res = await request(app)
+      .get('/v1/tasks?item_type=worker_test&assignee_id=hisham')
+      .set({...headers, 'x-user-role': 'worker'});
+
+    expect(res.status).toBe(200);
+    expect(res.body.map((t) => t.assignee_id)).toEqual(['ahmed']);
+  });
 });
 
 describe('POST /v1/tasks/:id/transition', () => {

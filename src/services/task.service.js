@@ -40,13 +40,17 @@ const createTask = async (clientId, userId, data) => {
   });
 };
 
-const listTasks = async (clientId, filters) => {
+const listTasks = async (clientId, userId, userRole, filters) => {
   const where = {client_id: clientId};
 
   for (const key of ALLOWED_FILTERS) {
     if (filters[key]) {
       where[key] = filters[key];
     }
+  }
+
+  if (userRole === 'worker') {
+    where.assignee_id = userId;
   }
 
   return taskDal.findTasks(where);

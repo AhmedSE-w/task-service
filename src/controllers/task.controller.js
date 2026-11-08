@@ -10,7 +10,7 @@ const createTask = async (req, res) => {
 };
 
 const listTasks = async (req, res) => {
-  const tasks = await taskService.listTasks(req.clientId, req.query);
+  const tasks = await taskService.listTasks(req.clientId, req.userId, req.userRole, req.query);
   res.json(tasks);
 };
 
