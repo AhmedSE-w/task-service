@@ -28,9 +28,7 @@ describe('POST /v1/tasks', () => {
       .send({
         task_type: 'verify_poi',
         title: 'Not allowed',
-        target_kind: 'item',
-        item_type: 'poi',
-        item_id: '1',
+        target: {kind: 'item', items: [{type: 'poi', id: '1'}]},
       });
 
     expect(res.status).toBe(403);
@@ -45,24 +43,36 @@ describe('POST /v1/tasks', () => {
   });
 
   it('creates a task', async () => {
-    const res = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Test task',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '1',
-    });
+    const res = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Test task',
+        target: {kind: 'item', items: [{type: 'poi', id: '1'}]},
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.title).toBe('Test task');
     expect(res.body.workflow_id).toBeDefined();
+    expect(res.body.item_id).toBe('1');
   });
 
-  it('returns 400 when item_id is missing', async () => {
+  it('returns 400 for an item task with two items', async () => {
     const res = await request(app)
       .post('/v1/tasks')
       .set(headers)
-      .send({task_type: 'verify_poi', title: 'Test task', target_kind: 'item', item_type: 'poi'});
+      .send({
+        task_type: 'verify_poi',
+        title: 'Test task',
+        target: {
+          kind: 'item',
+          items: [
+            {type: 'poi', id: '1'},
+            {type: 'poi', id: '2'},
+          ],
+        },
+      });
 
     expect(res.status).toBe(400);
   });
@@ -78,13 +88,14 @@ describe('GET /v1/tasks/:id', () => {
   });
 
   it('returns a task by id', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Find me',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '2',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Find me',
+        target: {kind: 'item', items: [{type: 'poi', id: '2'}]},
+      });
 
     const res = await request(app).get(`/v1/tasks/${created.body.id}`).set(headers);
 
@@ -98,14 +109,15 @@ describe('GET /v1/tasks/:id', () => {
     expect(res.status).toBe(400);
   });
   it("hides other people's tasks from a worker", async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Hisham only',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '40',
-      assignee_id: 'hisham',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Hisham only',
+        target: {kind: 'item', items: [{type: 'poi', id: '40'}]},
+        assignee_id: 'hisham',
+      });
     const worker = {...headers, 'x-user-role': 'worker'};
     const url = `/v1/tasks/${created.body.id}`;
 
@@ -116,13 +128,14 @@ describe('GET /v1/tasks/:id', () => {
 });
 describe('PATCH /v1/tasks/:id', () => {
   it('updates the priority', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Edit me',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '3',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Edit me',
+        target: {kind: 'item', items: [{type: 'poi', id: '3'}]},
+      });
 
     const res = await request(app)
       .patch(`/v1/tasks/${created.body.id}`)
@@ -133,13 +146,14 @@ describe('PATCH /v1/tasks/:id', () => {
   });
 
   it('records the events of a task', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'History',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '4',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'History',
+        target: {kind: 'item', items: [{type: 'poi', id: '4'}]},
+      });
 
     await request(app).patch(`/v1/tasks/${created.body.id}`).set(headers).send({priority: 'high'});
 
@@ -152,13 +166,14 @@ describe('PATCH /v1/tasks/:id', () => {
 
 describe('POST /v1/tasks/:id/comments', () => {
   it('adds and lists comments', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Comments',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '5',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Comments',
+        target: {kind: 'item', items: [{type: 'poi', id: '5'}]},
+      });
 
     await request(app)
       .post(`/v1/tasks/${created.body.id}/comments`)
@@ -174,13 +189,14 @@ describe('POST /v1/tasks/:id/comments', () => {
 
 describe('GET /v1/tasks', () => {
   it('filters tasks by item_id', async () => {
-    await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Filter me',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '999',
-    });
+    await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Filter me',
+        target: {kind: 'item', items: [{type: 'poi', id: '999'}]},
+      });
 
     const res = await request(app).get('/v1/tasks?item_id=999').set(headers);
 
@@ -192,17 +208,23 @@ describe('GET /v1/tasks', () => {
     const task = {
       task_type: 'verify_poi',
       title: 'Mine or not',
-      target_kind: 'item',
-      item_type: 'worker_test',
     };
     await request(app)
       .post('/v1/tasks')
       .set(headers)
-      .send({...task, item_id: '1', assignee_id: 'ahmed'});
+      .send({
+        ...task,
+        target: {kind: 'item', items: [{type: 'worker_test', id: '1'}]},
+        assignee_id: 'ahmed',
+      });
     await request(app)
       .post('/v1/tasks')
       .set(headers)
-      .send({...task, item_id: '2', assignee_id: 'hisham'});
+      .send({
+        ...task,
+        target: {kind: 'item', items: [{type: 'worker_test', id: '2'}]},
+        assignee_id: 'hisham',
+      });
 
     const res = await request(app)
       .get('/v1/tasks?item_type=worker_test&assignee_id=hisham')
@@ -215,14 +237,15 @@ describe('GET /v1/tasks', () => {
 
 describe('POST /v1/tasks/:id/transition', () => {
   it('lets the task assignee start a task', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Move me',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '10',
-      assignee_id: 'ahmed',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Move me',
+        target: {kind: 'item', items: [{type: 'poi', id: '10'}]},
+        assignee_id: 'ahmed',
+      });
 
     const res = await request(app)
       .post(`/v1/tasks/${created.body.id}/transition`)
@@ -234,14 +257,15 @@ describe('POST /v1/tasks/:id/transition', () => {
   });
 
   it('refuses a move the workflow does not allow', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Skip ahead',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '11',
-      assignee_id: 'ahmed',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Skip ahead',
+        target: {kind: 'item', items: [{type: 'poi', id: '11'}]},
+        assignee_id: 'ahmed',
+      });
 
     const res = await request(app)
       .post(`/v1/tasks/${created.body.id}/transition`)
@@ -252,14 +276,15 @@ describe('POST /v1/tasks/:id/transition', () => {
   });
 
   it('refuses a user who is not the assignee', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Not mine',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '12',
-      assignee_id: 'hisham',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Not mine',
+        target: {kind: 'item', items: [{type: 'poi', id: '12'}]},
+        assignee_id: 'hisham',
+      });
 
     const res = await request(app)
       .post(`/v1/tasks/${created.body.id}/transition`)
@@ -270,15 +295,16 @@ describe('POST /v1/tasks/:id/transition', () => {
   });
 
   it('refuses the assignee approving their own task', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Self review',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '30',
-      assignee_id: 'ahmed',
-      reviewer_id: 'ahmed',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Self review',
+        target: {kind: 'item', items: [{type: 'poi', id: '30'}]},
+        assignee_id: 'ahmed',
+        reviewer_id: 'ahmed',
+      });
 
     const url = `/v1/tasks/${created.body.id}/transition`;
 
@@ -290,15 +316,16 @@ describe('POST /v1/tasks/:id/transition', () => {
   });
 
   it('lets a manager approve a task', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Manager approves',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '50',
-      assignee_id: 'hisham',
-      reviewer_id: 'faisal',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Manager approves',
+        target: {kind: 'item', items: [{type: 'poi', id: '50'}]},
+        assignee_id: 'hisham',
+        reviewer_id: 'faisal',
+      });
     const url = `/v1/tasks/${created.body.id}/transition`;
     const hisham = {...headers, 'x-user-id': 'hisham', 'x-user-role': 'worker'};
 
@@ -311,14 +338,15 @@ describe('POST /v1/tasks/:id/transition', () => {
   });
 
   it('requires a reason to reject a task', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Reject me',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '60',
-      assignee_id: 'hisham',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Reject me',
+        target: {kind: 'item', items: [{type: 'poi', id: '60'}]},
+        assignee_id: 'hisham',
+      });
     const url = `/v1/tasks/${created.body.id}`;
     const hisham = {...headers, 'x-user-id': 'hisham', 'x-user-role': 'worker'};
 
@@ -344,13 +372,14 @@ describe('POST /v1/tasks/:id/transition', () => {
 
 describe('POST /v1/tasks/:id/assign', () => {
   it('lets a manager assign a task', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Assign me',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '20',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Assign me',
+        target: {kind: 'item', items: [{type: 'poi', id: '20'}]},
+      });
     const res = await request(app)
       .post(`/v1/tasks/${created.body.id}/assign`)
       .set(headers)
@@ -361,13 +390,14 @@ describe('POST /v1/tasks/:id/assign', () => {
   });
 
   it('refuses a worker to assign', async () => {
-    const created = await request(app).post('/v1/tasks').set(headers).send({
-      task_type: 'verify_poi',
-      title: 'Not my call',
-      target_kind: 'item',
-      item_type: 'poi',
-      item_id: '21',
-    });
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Not my call',
+        target: {kind: 'item', items: [{type: 'poi', id: '21'}]},
+      });
 
     const res = await request(app)
       .post(`/v1/tasks/${created.body.id}/assign`)

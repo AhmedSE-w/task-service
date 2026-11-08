@@ -8,9 +8,18 @@ const workflowDal = require('../dal/workflow.dal');
 const DEFAULT_WORKFLOW = require('./default-workflow');
 
 const createTask = async (clientId, userId, data) => {
-  if (data.target_kind === 'item' && (!data.item_type || !data.item_id)) {
-    throw new Error('item_type and item_id are required for an item task');
+  const {target, ...fields} = data;
+
+  if (target.kind === 'item' && target.items.length !== 1) {
+    const error = new Error('An item task needs exactly one item');
+    error.status = 400;
+    throw error;
   }
+
+  const columns =
+    target.kind === 'item'
+      ? {target_kind: 'item', item_type: target.items[0].type, item_id: target.items[0].id}
+      : {target_kind: 'batch'};
 
   return sequelize.transaction(async (transaction) => {
     let workflow = await workflowDal.findDefaultWorkflow(clientId, transaction);
@@ -22,7 +31,7 @@ const createTask = async (clientId, userId, data) => {
       );
     }
     const task = await taskDal.createTask(
-      {...data, client_id: clientId, workflow_id: workflow.id},
+      {...fields, ...columns, client_id: clientId, workflow_id: workflow.id},
       transaction,
     );
 
