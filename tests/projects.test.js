@@ -52,18 +52,16 @@ describe('GET /v1/projects/:id', () => {
     const task = {
       task_type: 'verify_poi',
       title: 'In project',
-      target_kind: 'item',
-      item_type: 'poi',
       project_id: project.body.id,
     };
     await request(app)
       .post('/v1/tasks')
       .set(headers)
-      .send({...task, item_id: '1'});
+      .send({...task, target: {kind: 'item', items: [{type: 'poi', id: '1'}]}});
     await request(app)
       .post('/v1/tasks')
       .set(headers)
-      .send({...task, item_id: '2'});
+      .send({...task, target: {kind: 'item', items: [{type: 'poi', id: '2'}]}});
 
     const res = await request(app).get(`/v1/projects/${project.body.id}`).set(headers);
 
@@ -92,8 +90,6 @@ describe('POST /v1/projects/:id/assign', () => {
     const task = {
       task_type: 'verify_poi',
       title: 'To split',
-      target_kind: 'item',
-      item_type: 'poi',
       project_id: project.body.id,
     };
 
@@ -101,7 +97,7 @@ describe('POST /v1/projects/:id/assign', () => {
       await request(app)
         .post('/v1/tasks')
         .set(headers)
-        .send({...task, item_id: String(i)});
+        .send({...task, target: {kind: 'item', items: [{type: 'poi', id: String(i)}]}});
     }
 
     const res = await request(app)

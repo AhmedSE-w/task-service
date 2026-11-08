@@ -280,14 +280,25 @@ components:
   schemas:
     TaskInput:
       type: object
-      required: [task_type, title, target_kind]
+      required: [task_type, title, target]
       properties:
         task_type: {type: string, example: verify_poi}
         title: {type: string, example: Verify Nahdi Olaya branch}
         priority: {type: string, enum: ['low', 'medium', 'high', 'urgent']}
-        target_kind: {type: string, enum: [item, batch]}
-        item_type: {type: string, example: poi}
-        item_id: {type: string, example: '12345'}
+        target:
+          type: object
+          required: [kind, items]
+          properties:
+            kind: {type: string, enum: [item, batch]}
+            items:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                required: [type, id]
+                properties:
+                  type: {type: string, example: poi}
+                  id: {type: string, example: '12345'}
         assignee_id: {type: string, example: hisham}
         reviewer_id: {type: string, example: faisal}
         project_id: {type: string, format: uuid}
