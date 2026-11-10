@@ -477,4 +477,28 @@ describe('POST /v1/tasks/:id/items/:itemId/decision', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('submits a batch only once every item is decided', async () => {
+    const batch = await startBatch();
+    const url = `/v1/tasks/${batch.id}`;
+
+    const early = await request(app).post(`${url}/transition`).set(headers).send({to: 'in_review'});
+    expect(early.status).toBe(400);
+
+    await request(app)
+      .post(`${url}/items/${batch.items[0].id}/decision`)
+      .set(headers)
+      .send({decision: 'approved'});
+    await request(app)
+      .post(`${url}/items/${batch.items[1].id}/decision`)
+      .set(headers)
+      .send({decision: 'rejected', reason: 'Duplicate'});
+
+    const submitted = await request(app)
+      .post(`${url}/transition`)
+      .set(headers)
+      .send({to: 'in_review'});
+    expect(submitted.status).toBe(200);
+    expect(submitted.body.status).toBe('in_review');
+  });
 });

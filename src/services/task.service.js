@@ -197,6 +197,14 @@ const transitionTask = async (clientId, userId, userRole, taskId, to, fields = {
     error.status = 403;
     throw error;
   }
+  if (task.target_kind === 'batch' && to === 'in_review') {
+    const items = await taskBatchItemDal.findItems(task.id);
+    if (items.some((item) => item.decision === 'pending')) {
+      const error = new Error('Every item needs a decision before submitting');
+      error.status = 400;
+      throw error;
+    }
+  }
 
   for (const field of move.required || []) {
     if (!fields[field]) {
