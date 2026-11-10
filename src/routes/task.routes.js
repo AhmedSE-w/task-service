@@ -9,6 +9,7 @@ const {
   listComments,
   transitionTask,
   assignTask,
+  decideItem,
 } = require('../controllers/task.controller');
 const {authenticate, requireManager} = require('../middlewares/auth.middleware');
 
@@ -23,5 +24,6 @@ router.post('/v1/tasks/:id/comments', authenticate, addComment);
 router.get('/v1/tasks/:id/comments', authenticate, listComments);
 router.post('/v1/tasks/:id/transition', authenticate, transitionTask);
 router.post('/v1/tasks/:id/assign', authenticate, requireManager, assignTask);
+router.post('/v1/tasks/:id/items/:itemId/decision', authenticate, decideItem);
 
 module.exports = router;

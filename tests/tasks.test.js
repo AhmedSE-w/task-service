@@ -76,6 +76,28 @@ describe('POST /v1/tasks', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('creates a batch task with its items', async () => {
+    const res = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'cr_review',
+        title: 'Review CRs from scrape run 812',
+        target: {
+          kind: 'batch',
+          items: [
+            {type: 'cr', id: '9876'},
+            {type: 'cr', id: '9877'},
+          ],
+        },
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.target_kind).toBe('batch');
+    expect(res.body.items.map((item) => item.item_id)).toEqual(['9876', '9877']);
+    expect(res.body.items.map((item) => item.decision)).toEqual(['pending', 'pending']);
+  });
 });
 
 describe('GET /v1/tasks/:id', () => {
@@ -405,5 +427,78 @@ describe('POST /v1/tasks/:id/assign', () => {
       .send({assignee_id: 'hisham'});
 
     expect(res.status).toBe(403);
+  });
+});
+
+describe('POST /v1/tasks/:id/items/:itemId/decision', () => {
+  const startBatch = async () => {
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'cr_review',
+        title: 'Batch to decide',
+        target: {
+          kind: 'batch',
+          items: [
+            {type: 'cr', id: 'a'},
+            {type: 'cr', id: 'b'},
+          ],
+        },
+        assignee_id: 'ahmed',
+      });
+    await request(app)
+      .post(`/v1/tasks/${created.body.id}/transition`)
+      .set(headers)
+      .send({to: 'in_progress'});
+    return created.body;
+  };
+
+  it('lets the assignee approve an item', async () => {
+    const batch = await startBatch();
+
+    const res = await request(app)
+      .post(`/v1/tasks/${batch.id}/items/${batch.items[0].id}/decision`)
+      .set(headers)
+      .send({decision: 'approved'});
+
+    expect(res.status).toBe(200);
+    expect(res.body.decision).toBe('approved');
+    expect(res.body.decided_by).toBe('ahmed');
+  });
+
+  it('refuses a rejection without a reason', async () => {
+    const batch = await startBatch();
+
+    const res = await request(app)
+      .post(`/v1/tasks/${batch.id}/items/${batch.items[0].id}/decision`)
+      .set(headers)
+      .send({decision: 'rejected'});
+
+    expect(res.status).toBe(400);
+  });
+
+  it('submits a batch only once every item is decided', async () => {
+    const batch = await startBatch();
+    const url = `/v1/tasks/${batch.id}`;
+
+    const early = await request(app).post(`${url}/transition`).set(headers).send({to: 'in_review'});
+    expect(early.status).toBe(400);
+
+    await request(app)
+      .post(`${url}/items/${batch.items[0].id}/decision`)
+      .set(headers)
+      .send({decision: 'approved'});
+    await request(app)
+      .post(`${url}/items/${batch.items[1].id}/decision`)
+      .set(headers)
+      .send({decision: 'rejected', reason: 'Duplicate'});
+
+    const submitted = await request(app)
+      .post(`${url}/transition`)
+      .set(headers)
+      .send({to: 'in_review'});
+    expect(submitted.status).toBe(200);
+    expect(submitted.body.status).toBe('in_review');
   });
 });

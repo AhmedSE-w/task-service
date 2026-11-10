@@ -6,6 +6,7 @@ const EDITABLE_FIELDS = ['title', 'priority', 'due_date'];
 const taskCommentDal = require('../dal/task-comment.dal');
 const workflowDal = require('../dal/workflow.dal');
 const DEFAULT_WORKFLOW = require('./default-workflow');
+const taskBatchItemDal = require('../dal/task-batch-item.dal');
 
 const createTask = async (clientId, userId, data) => {
   const {target, ...fields} = data;
@@ -45,7 +46,21 @@ const createTask = async (clientId, userId, data) => {
       transaction,
     );
 
-    return task;
+    if (target.kind !== 'batch') {
+      return task;
+    }
+
+    const items = await taskBatchItemDal.createItems(
+      target.items.map((item) => ({
+        task_id: task.id,
+        client_id: clientId,
+        item_type: item.type,
+        item_id: item.id,
+      })),
+      transaction,
+    );
+
+    return {...task.toJSON(), items};
   });
 };
 
@@ -182,6 +197,14 @@ const transitionTask = async (clientId, userId, userRole, taskId, to, fields = {
     error.status = 403;
     throw error;
   }
+  if (task.target_kind === 'batch' && to === 'in_review') {
+    const items = await taskBatchItemDal.findItems(task.id);
+    if (items.some((item) => item.decision === 'pending')) {
+      const error = new Error('Every item needs a decision before submitting');
+      error.status = 400;
+      throw error;
+    }
+  }
 
   for (const field of move.required || []) {
     if (!fields[field]) {
@@ -234,6 +257,44 @@ const assignTask = async (clientId, userId, taskId, assigneeId) => {
   });
 };
 
+const decideItem = async (clientId, userId, userRole, taskId, itemId, data) => {
+  const task = await getVisibleTask(clientId, userId, userRole, taskId);
+
+  const fail = (status, message) => {
+    const error = new Error(message);
+    error.status = status;
+    throw error;
+  };
+
+  if (task.target_kind !== 'batch') fail(400, 'Only batch tasks have items');
+  if (task.status !== 'in_progress')
+    fail(400, 'Items can only be decided while the task is in progress');
+  if (userId !== task.assignee_id) fail(403, 'Only the assignee can decide items');
+  if (data.decision === 'rejected' && !data.reason) fail(400, 'A rejected item needs a reason');
+
+  const item = await taskBatchItemDal.findOneItem({id: itemId, task_id: task.id});
+  if (!item) fail(404, 'Item not found');
+
+  return sequelize.transaction(async (transaction) => {
+    await taskEventDal.createTaskEvent(
+      {
+        task_id: task.id,
+        actor_id: userId,
+        client_id: clientId,
+        type: 'task.item_decided',
+        from_value: item.decision,
+        to_value: data.decision,
+      },
+      transaction,
+    );
+    return taskBatchItemDal.updateItem(
+      item,
+      {decision: data.decision, decided_by: userId, reason: data.reason || null},
+      transaction,
+    );
+  });
+};
+
 module.exports = {
   createTask,
   listTasks,
@@ -245,4 +306,5 @@ module.exports = {
   transitionTask,
   assignTask,
   getVisibleTask,
+  decideItem,
 };

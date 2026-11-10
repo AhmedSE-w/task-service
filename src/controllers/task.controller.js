@@ -110,6 +110,22 @@ const assignTask = async (req, res) => {
   }
 };
 
+const decideItem = async (req, res) => {
+  try {
+    const item = await taskService.decideItem(
+      req.clientId,
+      req.userId,
+      req.userRole,
+      req.params.id,
+      req.params.itemId,
+      req.body,
+    );
+    res.json(item);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
 module.exports = {
   createTask,
   listTasks,
@@ -120,4 +136,5 @@ module.exports = {
   listComments,
   transitionTask,
   assignTask,
+  decideItem,
 };
