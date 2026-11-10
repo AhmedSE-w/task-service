@@ -502,3 +502,43 @@ describe('POST /v1/tasks/:id/items/:itemId/decision', () => {
     expect(submitted.body.status).toBe('in_review');
   });
 });
+
+describe('POST /v1/tasks/bulk', () => {
+  const items = [1, 2, 3, 4, 5].map((n) => ({type: 'cr', id: `bulk-${n}`}));
+
+  it('creates one per item', async () => {
+    const res = await request(app)
+      .post('/v1/tasks/bulk')
+      .set(headers)
+      .send({task: {task_type: 'cr_review', title: 'One each'}, items});
+
+    expect(res.status).toBe(201);
+    expect(res.body.length).toBe(5);
+    expect(res.body.map((task) => task.target_kind)).toEqual([
+      'item',
+      'item',
+      'item',
+      'item',
+      'item',
+    ]);
+  });
+
+  it('creates one batch per group of N items', async () => {
+    const res = await request(app)
+      .post('/v1/tasks/bulk')
+      .set(headers)
+      .send({task: {task_type: 'cr_review', title: 'In batches'}, items, batch_size: 2});
+
+    expect(res.status).toBe(201);
+    expect(res.body.map((task) => task.items.length)).toEqual([2, 2, 1]);
+  });
+
+  it('refuses a worker', async () => {
+    const res = await request(app)
+      .post('/v1/tasks/bulk')
+      .set({...headers, 'x-user-role': 'worker'})
+      .send({task: {task_type: 'cr_review', title: 'No'}, items});
+
+    expect(res.status).toBe(403);
+  });
+});

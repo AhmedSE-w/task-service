@@ -39,6 +39,43 @@ paths:
         '200':
           description: The matching tasks
 
+  /v1/tasks/bulk:
+    post:
+      summary: Create many tasks at once (manager only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [task, items]
+              properties:
+                task:
+                  type: object
+                  required: [task_type, title]
+                  properties:
+                    task_type: {type: string, example: cr_review}
+                    title: {type: string, example: Review CRs from scrape run 812}
+                    priority: {type: string, enum: ['low', 'medium', 'high', 'urgent']}
+                    assignee_id: {type: string}
+                    reviewer_id: {type: string}
+                    project_id: {type: string, format: uuid}
+                    due_date: {type: string, format: date}
+                items:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [type, id]
+                    properties:
+                      type: {type: string, example: cr}
+                      id: {type: string, example: '9876'}
+                batch_size: {type: integer, minimum: 1, example: 10}
+      responses:
+        '201':
+          description: The created tasks
+        '403':
+          description: Only a manager can create tasks
   /v1/tasks/{id}:
     parameters:
       - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
