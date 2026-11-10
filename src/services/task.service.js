@@ -6,6 +6,7 @@ const EDITABLE_FIELDS = ['title', 'priority', 'due_date'];
 const taskCommentDal = require('../dal/task-comment.dal');
 const workflowDal = require('../dal/workflow.dal');
 const DEFAULT_WORKFLOW = require('./default-workflow');
+const taskBatchItemDal = require('../dal/task-batch-item.dal');
 
 const createTask = async (clientId, userId, data) => {
   const {target, ...fields} = data;
@@ -45,7 +46,21 @@ const createTask = async (clientId, userId, data) => {
       transaction,
     );
 
-    return task;
+    if (target.kind !== 'batch') {
+      return task;
+    }
+
+    const items = await taskBatchItemDal.createItems(
+      target.items.map((item) => ({
+        task_id: task.id,
+        client_id: clientId,
+        item_type: item.type,
+        item_id: item.id,
+      })),
+      transaction,
+    );
+
+    return {...task.toJSON(), items};
   });
 };
 

@@ -76,6 +76,28 @@ describe('POST /v1/tasks', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('creates a batch task with its items', async () => {
+    const res = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'cr_review',
+        title: 'Review CRs from scrape run 812',
+        target: {
+          kind: 'batch',
+          items: [
+            {type: 'cr', id: '9876'},
+            {type: 'cr', id: '9877'},
+          ],
+        },
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.target_kind).toBe('batch');
+    expect(res.body.items.map((item) => item.item_id)).toEqual(['9876', '9877']);
+    expect(res.body.items.map((item) => item.decision)).toEqual(['pending', 'pending']);
+  });
 });
 
 describe('GET /v1/tasks/:id', () => {
