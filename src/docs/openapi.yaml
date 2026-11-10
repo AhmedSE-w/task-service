@@ -152,6 +152,32 @@ paths:
         '404':
           description: Task not found
 
+  /v1/tasks/{id}/items/{itemId}/decision:
+    parameters:
+      - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      - {name: itemId, in: path, required: true, schema: {type: string, format: uuid}}
+    post:
+      summary: Approve or reject one item in a batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: {type: string, enum: [approved, rejected]}
+                reason: {type: string, example: The name is wrong}
+      responses:
+        '200':
+          description: The item with its decision
+        '400':
+          description: Not a batch task, not in progress, or a rejection without a reason
+        '403':
+          description: Only the assignee can decide items
+        '404':
+          description: Task or item not found
+
   /v1/projects:
     post:
       summary: Create a project (manager only)
