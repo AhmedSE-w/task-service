@@ -9,6 +9,15 @@ const createTask = async (req, res) => {
   }
 };
 
+const createTasksBulk = async (req, res) => {
+  try {
+    const tasks = await taskService.createTasksBulk(req.clientId, req.userId, req.body);
+    res.status(201).json(tasks);
+  } catch (error) {
+    res.status(error.status || 400).json({error: error.message});
+  }
+};
+
 const listTasks = async (req, res) => {
   const tasks = await taskService.listTasks(req.clientId, req.userId, req.userRole, req.query);
   res.json(tasks);
@@ -137,4 +146,5 @@ module.exports = {
   transitionTask,
   assignTask,
   decideItem,
+  createTasksBulk,
 };

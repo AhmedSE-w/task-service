@@ -7,8 +7,9 @@ const taskCommentDal = require('../dal/task-comment.dal');
 const workflowDal = require('../dal/workflow.dal');
 const DEFAULT_WORKFLOW = require('./default-workflow');
 const taskBatchItemDal = require('../dal/task-batch-item.dal');
+const {chunk} = require('./split');
 
-const createTask = async (clientId, userId, data) => {
+const createTask = async (clientId, userId, data, outer) => {
   const {target, ...fields} = data;
 
   if (target.kind === 'item' && target.items.length !== 1) {
@@ -22,7 +23,7 @@ const createTask = async (clientId, userId, data) => {
       ? {target_kind: 'item', item_type: target.items[0].type, item_id: target.items[0].id}
       : {target_kind: 'batch'};
 
-  return sequelize.transaction(async (transaction) => {
+  const run = async (transaction) => {
     let workflow = await workflowDal.findDefaultWorkflow(clientId, transaction);
 
     if (!workflow) {
@@ -61,6 +62,29 @@ const createTask = async (clientId, userId, data) => {
     );
 
     return {...task.toJSON(), items};
+  };
+  return outer ? run(outer) : sequelize.transaction(run);
+};
+
+const createTasksBulk = async (clientId, userId, data) => {
+  const kind = data.batch_size ? 'batch' : 'item';
+  const groups = data.batch_size
+    ? chunk(data.items, data.batch_size)
+    : data.items.map((item) => [item]);
+
+  return sequelize.transaction(async (transaction) => {
+    const tasks = [];
+    for (const group of groups) {
+      tasks.push(
+        await createTask(
+          clientId,
+          userId,
+          {...data.task, target: {kind, items: group}},
+          transaction,
+        ),
+      );
+    }
+    return tasks;
   });
 };
 
@@ -307,4 +331,5 @@ module.exports = {
   assignTask,
   getVisibleTask,
   decideItem,
+  createTasksBulk,
 };

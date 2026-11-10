@@ -1,4 +1,4 @@
-const {splitCounts} = require('../src/services/split');
+const {splitCounts, chunk} = require('../src/services/split');
 
 const splits = [{percent: 50}, {percent: 30}, {percent: 20}];
 
@@ -9,5 +9,11 @@ describe('splitCounts', () => {
 
   it('given the remainder to the biggest fraction', () => {
     expect(splitCounts(7, splits)).toEqual([4, 2, 1]);
+  });
+});
+
+describe('chunk', () => {
+  it('splits a list into groups of a size', () => {
+    expect(chunk(['1', '2', '3', '4', '5'], 2)).toEqual([['1', '2'], ['3', '4'], ['5']]);
   });
 });
