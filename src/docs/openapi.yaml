@@ -59,6 +59,7 @@ paths:
                     priority: {type: string, enum: ['low', 'medium', 'high', 'urgent']}
                     assignee_id: {type: string}
                     reviewer_id: {type: string}
+                    workflow_id: {type: string, format: uuid}
                     project_id: {type: string, format: uuid}
                     due_date: {type: string, format: date}
                 items:
@@ -363,6 +364,7 @@ components:
                   type: {type: string, example: poi}
                   id: {type: string, example: '12345'}
         assignee_id: {type: string, example: hisham}
+        workflow_id: {type: string, format: uuid}
         reviewer_id: {type: string, example: faisal}
         project_id: {type: string, format: uuid}
         due_date: {type: string, format: date}
