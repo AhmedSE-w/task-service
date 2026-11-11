@@ -321,7 +321,11 @@ const decideItem = async (clientId, userId, userRole, taskId, itemId, data) => {
     );
     return taskBatchItemDal.updateItem(
       item,
-      {decision: data.decision, decided_by: userId, reason: data.reason || null},
+      {
+        decision: data.decision,
+        decided_by: userId,
+        reason: data.decision === 'rejected' ? data.reason : null,
+      },
       transaction,
     );
   });

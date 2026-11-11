@@ -482,11 +482,12 @@ describe('POST /v1/tasks/:id/items/:itemId/decision', () => {
     const res = await request(app)
       .post(`/v1/tasks/${batch.id}/items/${batch.items[0].id}/decision`)
       .set(headers)
-      .send({decision: 'approved'});
+      .send({decision: 'approved', reason: 'Looks fine'});
 
     expect(res.status).toBe(200);
     expect(res.body.decision).toBe('approved');
     expect(res.body.decided_by).toBe('ahmed');
+    expect(res.body.reason).toBeNull();
   });
 
   it('refuses a rejection without a reason', async () => {
