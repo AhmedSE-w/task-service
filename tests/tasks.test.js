@@ -125,6 +125,28 @@ describe('GET /v1/tasks/:id', () => {
     expect(res.body.title).toBe('Find me');
   });
 
+  it('returns a batch task with its items', async () => {
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'cr_review',
+        title: 'Show my items',
+        target: {
+          kind: 'batch',
+          items: [
+            {type: 'cr', id: 's1'},
+            {type: 'cr', id: 's2'},
+          ],
+        },
+      });
+
+    const res = await request(app).get(`/v1/tasks/${created.body.id}`).set(headers);
+
+    expect(res.status).toBe(200);
+    expect(res.body.items.map((item) => item.item_id)).toEqual(['s1', 's2']);
+  });
+
   it('returns 400 for an id that is not a uuid', async () => {
     const res = await request(app).get('/v1/tasks/not-a-uuid').set(headers);
 
