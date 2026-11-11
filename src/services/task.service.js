@@ -126,6 +126,14 @@ const getVisibleTask = async (clientId, userId, userRole, taskId) => {
   return task;
 };
 
+const showTask = async (clientId, userId, userRole, taskId) => {
+  const task = await getVisibleTask(clientId, userId, userRole, taskId);
+  if (task.target_kind !== 'batch') return task;
+
+  const items = await taskBatchItemDal.findItems(task.id);
+  return {...task.toJSON(), items};
+};
+
 const updateTask = async (clientId, userId, taskId, changes) => {
   const task = await getTask(clientId, taskId);
 
@@ -332,4 +340,5 @@ module.exports = {
   getVisibleTask,
   decideItem,
   createTasksBulk,
+  showTask,
 };

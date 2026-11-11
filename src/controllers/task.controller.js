@@ -25,12 +25,7 @@ const listTasks = async (req, res) => {
 
 const getTask = async (req, res) => {
   try {
-    const task = await taskService.getVisibleTask(
-      req.clientId,
-      req.userId,
-      req.userRole,
-      req.params.id,
-    );
+    const task = await taskService.showTask(req.clientId, req.userId, req.userRole, req.params.id);
     res.json(task);
   } catch (error) {
     res.status(error.status || 400).json({error: error.message});
