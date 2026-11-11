@@ -24,7 +24,15 @@ const createTask = async (clientId, userId, data, outer) => {
       : {target_kind: 'batch'};
 
   const run = async (transaction) => {
-    let workflow = await workflowDal.findDefaultWorkflow(clientId, transaction);
+    let workflow = fields.workflow_id
+      ? await workflowDal.findClientWorkflow(clientId, fields.workflow_id, transaction)
+      : await workflowDal.findDefaultWorkflow(clientId, transaction);
+
+    if (fields.workflow_id && !workflow) {
+      const error = new Error('Workflow not found');
+      error.status = 400;
+      throw error;
+    }
 
     if (!workflow) {
       workflow = await workflowDal.createWorkflow(
@@ -33,7 +41,13 @@ const createTask = async (clientId, userId, data, outer) => {
       );
     }
     const task = await taskDal.createTask(
-      {...fields, ...columns, client_id: clientId, workflow_id: workflow.id},
+      {
+        ...fields,
+        ...columns,
+        client_id: clientId,
+        workflow_id: workflow.id,
+        status: workflow.statuses[0],
+      },
       transaction,
     );
 

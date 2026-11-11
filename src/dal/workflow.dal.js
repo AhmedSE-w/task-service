@@ -12,4 +12,8 @@ const findWorkflowById = async (id) => {
   return Workflow.findByPk(id);
 };
 
-module.exports = {findDefaultWorkflow, createWorkflow, findWorkflowById};
+const findClientWorkflow = async (clientId, id, transaction) => {
+  return Workflow.findOne({where: {id, client_id: clientId}, transaction});
+};
+
+module.exports = {findDefaultWorkflow, createWorkflow, findWorkflowById, findClientWorkflow};
