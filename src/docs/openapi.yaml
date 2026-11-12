@@ -208,7 +208,7 @@ paths:
                 reason: {type: string, example: The name is wrong}
       responses:
         '200':
-          description: The item with its decision
+          description: The task with all its items
         '400':
           description: Not a batch task, not in progress, or a rejection without a reason
         '403':

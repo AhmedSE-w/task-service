@@ -522,9 +522,11 @@ describe('POST /v1/tasks/:id/items/:itemId/decision', () => {
       .send({decision: 'approved', reason: 'Looks fine'});
 
     expect(res.status).toBe(200);
-    expect(res.body.decision).toBe('approved');
-    expect(res.body.decided_by).toBe('ahmed');
-    expect(res.body.reason).toBeNull();
+    const item = res.body.items.find((one) => one.id === batch.items[0].id);
+    expect(res.body.id).toBe(batch.id);
+    expect(item.decision).toBe('approved');
+    expect(item.decided_by).toBe('ahmed');
+    expect(item.reason).toBeNull();
   });
 
   it('refuses a rejection without a reason', async () => {

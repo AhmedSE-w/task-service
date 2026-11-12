@@ -322,7 +322,7 @@ const decideItem = async (clientId, userId, userRole, taskId, itemId, data) => {
   const item = await taskBatchItemDal.findOneItem({id: itemId, task_id: task.id});
   if (!item) fail(404, 'Item not found');
 
-  return sequelize.transaction(async (transaction) => {
+  await sequelize.transaction(async (transaction) => {
     await taskEventDal.createTaskEvent(
       {
         task_id: task.id,
@@ -334,7 +334,7 @@ const decideItem = async (clientId, userId, userRole, taskId, itemId, data) => {
       },
       transaction,
     );
-    return taskBatchItemDal.updateItem(
+    await taskBatchItemDal.updateItem(
       item,
       {
         decision: data.decision,
@@ -344,6 +344,7 @@ const decideItem = async (clientId, userId, userRole, taskId, itemId, data) => {
       transaction,
     );
   });
+  return showTask(clientId, userId, userRole, taskId);
 };
 
 module.exports = {
