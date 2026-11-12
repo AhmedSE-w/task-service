@@ -41,6 +41,20 @@ describe('POST /v1/workflows', () => {
 
     expect(res.status).toBe(403);
   });
+
+  it('refuses a move to a status that does not exist', async () => {
+    const res = await request(app)
+      .post('/v1/workflows')
+      .set(headers)
+      .send({
+        name: 'Broken',
+        statuses: ['new', 'closed'],
+        transitions: [{from: 'new', to: 'done', by: ['assignee']}],
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Unknown status in move new -> done');
+  });
 });
 
 describe('a task in a chosen workflow', () => {
