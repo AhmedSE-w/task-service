@@ -169,6 +169,25 @@ describe('GET /v1/tasks/:id', () => {
     expect((await request(app).get(`${url}/events`).set(worker)).status).toBe(404);
     expect((await request(app).get(`${url}/comments`).set(worker)).status).toBe(404);
   });
+  it('shows a task to the worker who reviews it', async () => {
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Review me',
+        assignee_id: 'hisham',
+        reviewer_id: 'sara',
+        target: {kind: 'item', items: [{type: 'reviewer_test', id: '1'}]},
+      });
+    const sara = {...headers, 'x-user-id': 'sara', 'x-user-role': 'worker'};
+
+    const one = await request(app).get(`/v1/tasks/${created.body.id}`).set(sara);
+    const list = await request(app).get('/v1/tasks?item_type=reviewer_test').set(sara);
+
+    expect(one.status).toBe(200);
+    expect(list.body.map((t) => t.title)).toEqual(['Review me']);
+  });
 });
 describe('PATCH /v1/tasks/:id', () => {
   it('updates the priority', async () => {
@@ -187,6 +206,24 @@ describe('PATCH /v1/tasks/:id', () => {
       .send({priority: 'high'});
     expect(res.status).toBe(200);
     expect(res.body.priority).toBe('high');
+  });
+  it('refuses a worker editing a task', async () => {
+    const created = await request(app)
+      .post('/v1/tasks')
+      .set(headers)
+      .send({
+        task_type: 'verify_poi',
+        title: 'Not yours to edit',
+        assignee_id: 'ahmed',
+        target: {kind: 'item', items: [{type: 'poi', id: '4'}]},
+      });
+
+    const res = await request(app)
+      .patch(`/v1/tasks/${created.body.id}`)
+      .set({...headers, 'x-user-role': 'worker'})
+      .send({priority: 'high'});
+
+    expect(res.status).toBe(403);
   });
 
   it('records the events of a task', async () => {
@@ -275,7 +312,7 @@ describe('GET /v1/tasks', () => {
       .set({...headers, 'x-user-role': 'worker'});
 
     expect(res.status).toBe(200);
-    expect(res.body.map((t) => t.assignee_id)).toEqual(['ahmed']);
+    expect(res.body.map((t) => t.assignee_id)).toEqual([]);
   });
 });
 

@@ -8,6 +8,7 @@ const workflowDal = require('../dal/workflow.dal');
 const DEFAULT_WORKFLOW = require('./default-workflow');
 const taskBatchItemDal = require('../dal/task-batch-item.dal');
 const {chunk} = require('./split');
+const {Op} = require('sequelize');
 
 const createTask = async (clientId, userId, data, outer) => {
   const {target, ...fields} = data;
@@ -112,7 +113,7 @@ const listTasks = async (clientId, userId, userRole, filters) => {
   }
 
   if (userRole === 'worker') {
-    where.assignee_id = userId;
+    where[Op.or] = [{assignee_id: userId}, {reviewer_id: userId}];
   }
 
   return taskDal.findTasks(where);
@@ -132,7 +133,7 @@ const getTask = async (clientId, taskId) => {
 
 const getVisibleTask = async (clientId, userId, userRole, taskId) => {
   const task = await getTask(clientId, taskId);
-  if (userRole === 'worker' && task.assignee_id !== userId) {
+  if (userRole === 'worker' && task.assignee_id !== userId && task.reviewer_id !== userId) {
     const error = new Error('Task not found');
     error.status = 404;
     throw error;
