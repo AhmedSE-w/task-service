@@ -530,6 +530,20 @@ describe('POST /v1/tasks/:id/items/:itemId/decision', () => {
     expect(item.reason).toBeNull();
   });
 
+  it('lets a manager who is not the assignee decide an item', async () => {
+    const batch = await submitBatch();
+    const manager = {...headers, 'x-user-id': 'sara', 'x-user-role': 'manager'};
+
+    const res = await request(app)
+      .post(`/v1/tasks/${batch.id}/items/${batch.items[0].id}/decision`)
+      .set(manager)
+      .send({decision: 'rejected', reason: 'approved'});
+
+    expect(res.status).toBe(200);
+    const item = res.body.items.find((one) => one.id === batch.items[0].id);
+    expect(item.decided_by).toBe('sara');
+  });
+
   it('refuses the assignee deciding an item', async () => {
     const batch = await submitBatch();
 
