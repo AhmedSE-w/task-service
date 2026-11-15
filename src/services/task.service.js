@@ -244,10 +244,10 @@ const transitionTask = async (clientId, userId, userRole, taskId, to, fields = {
     error.status = 403;
     throw error;
   }
-  if (task.target_kind === 'batch' && to === 'in_review') {
+  if (task.target_kind === 'batch' && to === 'done') {
     const items = await taskBatchItemDal.findItems(task.id);
     if (items.some((item) => item.decision === 'pending')) {
-      const error = new Error('Every item needs a decision before submitting');
+      const error = new Error('Every item needs a decision before approving');
       error.status = 400;
       throw error;
     }
@@ -314,9 +314,11 @@ const decideItem = async (clientId, userId, userRole, taskId, itemId, data) => {
   };
 
   if (task.target_kind !== 'batch') fail(400, 'Only batch tasks have items');
-  if (task.status !== 'in_progress')
-    fail(400, 'Items can only be decided while the task is in progress');
-  if (userId !== task.assignee_id) fail(403, 'Only the assignee can decide items');
+  if (task.status !== 'in_review')
+    fail(400, 'Items can only be decided while the task is in review');
+  if (userId === task.assignee_id) fail(403, 'You cannot decide items of your own task');
+  if (userRole === 'worker' && userId !== task.reviewer_id)
+    fail(403, 'Only the reviewer or a manager can decide items');
   if (data.decision === 'rejected' && !data.reason) fail(400, 'A rejected item needs a reason');
 
   const item = await taskBatchItemDal.findOneItem({id: itemId, task_id: task.id});
